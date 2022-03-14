@@ -9,9 +9,11 @@ generate_data/config
 generate_data/reference_1.*
 !generate_data/reference_1.fasta
 
+!generate_data/art_bin_ChocolateCherryCake/
 generate_data/art_bin_ChocolateCherryCake/*
 !generate_data/art_bin_ChocolateCherryCake/art_illumina
 
+!generate_data/bwa-0.7.17/
 generate_data/bwa-0.7.17/*
 !generate_data/bwa-0.7.17/bwa
 
