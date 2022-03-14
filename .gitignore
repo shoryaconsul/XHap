@@ -13,7 +13,7 @@ generate_data/art_bin_ChocolateCherryCake/*
 !generate_data/art_bin_ChocolateCherryCake/art_illumina
 
 generate_data/bwa-0.7.17/*
-!generate_data/"bwa-0.7.17/bwa
+!generate_data/bwa-0.7.17/bwa
 
 generate_data/HapCUT2/
 generate_data/haptest/
