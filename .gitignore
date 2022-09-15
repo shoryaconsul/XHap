@@ -3,6 +3,9 @@ corr_xformer
 read_AE
 *.npz
 
+Ranbow.zip
+ranbow_*
+
 Transformers_v*.ipynb
 
 Simulated_data/
