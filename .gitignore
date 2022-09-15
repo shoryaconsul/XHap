@@ -18,6 +18,7 @@ generate_data/reference_1.*
 generate_data/helper_original.py
 generate_data/hap*
 generate_data/cov*
+generate_data/pbsim_test
 
 generate_data/lactococcus_phage.fa.amb
 generate_data/lactococcus_phage.fa.ann
