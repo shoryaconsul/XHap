@@ -2,11 +2,15 @@ token
 corr_xformer
 read_AE
 *.npz
+*.log
 
 Ranbow.zip
 ranbow_*
 
+SDHap
+
 Transformers_v*.ipynb
+File Parsing.ipynb
 
 Simulated_data/
 
@@ -18,6 +22,8 @@ generate_data/reference_1.*
 generate_data/helper_original.py
 generate_data/hap*
 generate_data/cov*
+generate_data/pbsim_test
+generate_data/pbsim2
 
 generate_data/lactococcus_phage.fa.amb
 generate_data/lactococcus_phage.fa.ann
