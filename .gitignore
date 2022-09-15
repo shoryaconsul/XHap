@@ -3,7 +3,10 @@ corr_xformer
 read_AE
 *.npz
 
+Transformers_v*.ipynb
+
 Simulated_data/
+
 generate_data/argcmd_test.cpp
 generate_data/a.out
 generate_data/config
