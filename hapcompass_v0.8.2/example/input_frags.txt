@@ -1,0 +1,377 @@
+1	generated_321	chr1 0 1 M 1 1 M
+2	generated_211	chr1 0 0 H	chr1 2 0 M
+2	generated_86	chr1 2 0 H	chr1 4 0 M
+2	generated_156	chr1 3 1 H	chr1 4 1 M
+1	generated_290	chr1 4 1 M 5 1 M
+1	generated_295	chr1 4 0 M 5 0 M
+1	generated_296	chr1 4 1 M 5 1 M 6 1 M
+1	generated_338	chr1 4 1 M 5 1 M
+1	generated_272	chr1 5 0 M 6 0 M
+1	generated_359	chr1 5 0 M 6 0 M
+2	generated_20	chr1 4 1 H	chr1 6 1 M
+2	generated_88	chr1 2 1 H	chr1 6 1 M
+2	generated_169	chr1 4 1 H	chr1 6 1 M
+2	generated_9	chr1 6 1 H	chr1 7 1 M
+1	generated_260	chr1 7 0 M 8 0 M 9 0 M
+1	generated_277	chr1 7 1 M 8 1 M 9 1 M
+2	generated_59	chr1 7 1 H	chr1 8 1 M
+2	generated_69	chr1 7 0 H	chr1 8 0 M
+2	generated_95	chr1 7 1 H	chr1 8 1 M 9 1 M
+1	generated_107	chr1 8 0 M 9 0 M
+1	generated_168	chr1 8 1 M 9 1 M
+1	generated_250	chr1 8 0 M 9 0 M
+1	generated_254	chr1 8 1 M 9 1 M
+1	generated_286	chr1 8 0 M 9 0 M
+1	generated_310	chr1 8 0 M 9 0 M
+1	generated_311	chr1 8 1 M 9 1 M
+1	generated_396	chr1 8 1 M 9 1 M 10 1 M 11 1 M
+1	generated_333	chr1 9 1 M 10 1 M 11 1 M
+1	generated_341	chr1 9 1 M 10 1 M 11 1 M
+1	generated_273	chr1 10 0 M 11 0 M
+1	generated_289	chr1 10 1 M 11 1 M
+1	generated_294	chr1 10 0 M 11 0 M
+1	generated_334	chr1 10 0 M 11 0 M
+1	generated_369	chr1 10 0 M 11 0 M
+1	generated_371	chr1 10 1 M 11 1 M
+1	generated_382	chr1 10 1 M 11 1 M
+2	generated_56	chr1 10 1 H	chr1 11 1 M
+2	generated_98	chr1 10 1 H	chr1 11 1 M
+2	generated_99	chr1 10 0 H	chr1 11 0 M
+2	generated_192	chr1 10 0 H	chr1 11 0 M
+2	generated_203	chr1 10 0 H	chr1 11 0 M
+2	generated_229	chr1 8 1 H	chr1 12 1 M
+2	generated_258	chr1 12 1 H	chr1 14 1 M
+1	generated_335	chr1 14 0 M 15 0 M
+2	generated_11	chr1 14 0 H	chr1 15 0 M
+2	generated_14	chr1 14 1 H	chr1 15 1 M
+2	generated_15	chr1 14 0 H	chr1 15 0 M
+2	generated_23	chr1 14 0 H	chr1 15 0 M
+2	generated_134	chr1 13 0 H	chr1 15 0 M
+2	generated_149	chr1 14 1 H	chr1 15 1 M
+2	generated_152	chr1 14 0 H	chr1 15 0 M
+2	generated_187	chr1 14 0 H	chr1 15 0 M
+1	generated_328	chr1 15 0 M 16 0 M
+1	generated_329	chr1 15 1 M 16 1 M
+2	generated_17	chr1 15 1 H	chr1 16 1 M
+2	generated_130	chr1 14 1 H	chr1 16 1 M
+2	generated_137	chr1 15 0 H	chr1 16 0 M
+2	generated_157	chr1 15 1 H	chr1 16 1 M
+2	generated_265	chr1 13 0 H	chr1 17 0 M
+1	generated_271	chr1 18 0 M 19 1 M
+1	generated_317	chr1 18 0 M 19 1 M
+1	generated_366	chr1 18 0 M 19 1 M
+1	generated_386	chr1 18 0 M 19 1 M
+2	generated_13	chr1 18 1 H	chr1 19 0 M
+2	generated_19	chr1 18 1 H	chr1 19 0 M
+2	generated_72	chr1 18 1 H	chr1 19 0 M
+2	generated_73	chr1 18 0 H	chr1 19 1 M
+2	generated_79	chr1 18 1 H	chr1 19 0 M
+2	generated_80	chr1 18 1 H	chr1 19 0 M
+2	generated_84	chr1 18 1 H	chr1 19 0 M
+2	generated_108	chr1 18 0 H	chr1 19 1 M
+2	generated_109	chr1 18 0 H	chr1 19 1 M
+2	generated_123	chr1 18 0 H	chr1 19 1 M
+2	generated_132	chr1 18 1 H	chr1 19 0 M
+2	generated_141	chr1 18 0 H	chr1 19 1 M
+2	generated_154	chr1 18 0 H	chr1 19 1 M
+2	generated_163	chr1 18 0 H	chr1 19 1 M
+2	generated_165	chr1 18 0 H	chr1 19 1 M
+2	generated_172	chr1 18 0 H	chr1 19 1 M
+2	generated_199	chr1 18 0 H	chr1 19 1 M
+1	generated_122	chr1 20 1 M 21 1 M
+1	generated_146	chr1 20 0 M 21 0 M
+2	generated_210	chr1 18 1 H	chr1 20 1 M
+1	generated_231	chr1 20 1 M 21 1 M
+1	generated_266	chr1 20 0 M 21 0 M
+2	generated_288	chr1 17 1 H	chr1 20 1 M 21 1 M
+1	generated_291	chr1 20 0 M 21 0 M
+1	generated_302	chr1 20 1 M 21 1 M
+1	generated_322	chr1 20 1 M 21 1 M 22 1 M
+1	generated_337	chr1 20 1 M 21 1 M
+1	generated_348	chr1 20 0 M 21 0 M 22 0 M
+1	generated_351	chr1 20 0 M 21 0 M
+1	generated_357	chr1 20 1 M 21 1 M 22 1 M
+1	generated_395	chr1 20 0 M 21 0 M 22 0 M
+2	generated_180	chr1 20 1 H	chr1 21 1 M
+1	generated_377	chr1 21 1 M 22 1 M
+2	generated_34	chr1 21 1 H	chr1 22 1 M
+2	generated_53	chr1 21 1 H	chr1 22 1 M
+2	generated_55	chr1 21 1 H	chr1 22 1 M
+2	generated_77	chr1 20 0 H	chr1 22 0 M
+2	generated_155	chr1 21 0 H	chr1 22 0 M
+2	generated_182	chr1 20 0 H	chr1 22 0 M
+1	generated_255	chr1 22 1 M 23 1 M
+1	generated_308	chr1 22 1 M 23 1 M
+2	generated_3	chr1 22 1 H	chr1 23 1 M
+1	generated_345	chr1 23 0 M 24 0 M
+1	generated_354	chr1 23 0 M 24 0 M
+1	generated_340	chr1 24 1 M 25 1 M
+1	generated_238	chr1 25 1 M 26 1 M
+1	generated_278	chr1 25 0 M 26 0 M
+1	generated_312	chr1 25 0 M 26 0 M 27 0 M 28 0 M
+1	generated_367	chr1 25 1 M 26 1 M
+2	generated_7	chr1 25 1 H	chr1 26 1 M
+2	generated_26	chr1 25 0 H	chr1 26 0 M
+2	generated_30	chr1 25 0 H	chr1 26 0 M
+2	generated_127	chr1 25 1 H	chr1 26 1 M
+1	generated_230	chr1 26 1 M 27 1 M 28 1 M
+1	generated_284	chr1 26 1 M 27 1 M
+1	generated_293	chr1 26 0 M 27 0 M 28 0 M
+1	generated_298	chr1 26 0 M 27 0 M 28 0 M 29 0 M
+1	generated_299	chr1 26 0 M 27 0 M 28 0 M
+1	generated_304	chr1 26 0 M 27 0 M 28 0 M 29 0 M
+1	generated_326	chr1 26 1 M 27 1 M 28 1 M 29 1 M
+1	generated_330	chr1 26 1 M 27 1 M 28 1 M 29 1 M
+1	generated_332	chr1 26 1 M 27 1 M
+1	generated_342	chr1 26 1 M 27 1 M 28 1 M 29 1 M
+1	generated_353	chr1 26 1 M 27 1 M 28 1 M 29 1 M
+1	generated_376	chr1 26 0 M 27 0 M 28 0 M
+1	generated_383	chr1 26 0 M 27 0 M 28 0 M
+1	generated_1	chr1 27 1 M 28 1 M
+1	generated_5	chr1 27 1 M 28 1 M
+1	generated_24	chr1 27 1 M 28 1 M
+1	generated_25	chr1 27 1 M 28 1 M
+1	generated_28	chr1 27 0 M 28 0 M
+1	generated_66	chr1 27 1 M 28 1 M
+1	generated_67	chr1 27 0 M 28 0 M
+1	generated_83	chr1 27 0 M 28 1 M
+2	generated_90	chr1 26 0 H	chr1 27 0 M 28 0 M
+1	generated_92	chr1 27 0 M 28 0 M
+2	generated_93	chr1 26 1 H	chr1 27 1 M 28 1 M
+1	generated_101	chr1 27 0 M 28 0 M
+2	generated_117	chr1 26 0 H	chr1 27 0 M 28 0 M
+1	generated_121	chr1 27 1 M 28 1 M
+1	generated_145	chr1 27 0 M 28 0 M
+1	generated_176	chr1 27 0 M 28 0 M
+1	generated_178	chr1 27 0 M 28 0 M
+1	generated_179	chr1 27 0 M 28 0 M
+1	generated_189	chr1 27 1 M 28 1 M
+2	generated_207	chr1 26 0 H	chr1 27 0 M 28 0 M
+1	generated_212	chr1 27 0 M 28 0 M
+1	generated_213	chr1 27 0 M 28 0 M
+1	generated_214	chr1 27 0 M 28 0 M
+1	generated_215	chr1 27 0 M 28 0 M
+1	generated_218	chr1 27 0 M 28 0 M
+1	generated_220	chr1 27 0 M 28 0 M
+1	generated_221	chr1 27 0 M 28 0 M
+1	generated_228	chr1 27 0 M 28 0 M
+1	generated_267	chr1 27 1 M 28 1 M 29 1 M
+1	generated_373	chr1 27 0 M 28 0 M 29 0 M
+2	generated_42	chr1 26 0 H	chr1 28 0 M
+2	generated_64	chr1 26 1 H	chr1 28 1 M
+2	generated_102	chr1 27 1 H	chr1 29 1 M
+2	generated_136	chr1 27 0 H 28 0 H	chr1 29 0 M
+2	generated_184	chr1 27 1 H	chr1 29 1 M
+2	generated_217	chr1 21 1 H	chr1 29 0 M
+2	generated_162	chr1 29 0 H	chr1 30 0 M
+1	generated_264	chr1 30 0 M 31 0 M 32 0 M 33 0 M 34 0 M
+1	generated_268	chr1 30 1 M 31 1 M
+1	generated_292	chr1 30 1 M 31 1 M
+1	generated_324	chr1 30 1 M 31 1 M 32 1 M 33 1 M 34 1 M 35 1 M
+1	generated_361	chr1 30 0 M 31 0 M 32 0 M 33 0 M
+1	generated_372	chr1 30 1 M 31 1 M 32 1 M 33 1 M
+1	generated_385	chr1 30 1 M 31 1 M 32 1 M 33 1 M 34 1 M
+2	generated_37	chr1 30 1 H	chr1 31 1 M
+2	generated_45	chr1 30 0 H	chr1 31 0 M
+2	generated_54	chr1 30 0 H	chr1 31 0 M
+2	generated_62	chr1 30 0 H	chr1 31 0 M
+2	generated_167	chr1 31 0 H	chr1 32 0 M
+1	generated_244	chr1 31 0 M 32 0 M 33 0 M 34 0 M
+1	generated_356	chr1 31 0 M 32 0 M 33 0 M 34 0 M 35 0 M 36 0 M
+1	generated_363	chr1 31 0 M 32 0 M
+1	generated_364	chr1 31 1 M 32 1 M 33 1 M 34 1 M
+2	generated_78	chr1 30 0 H	chr1 32 0 M
+2	generated_85	chr1 30 0 H	chr1 32 0 M
+2	generated_112	chr1 31 0 H	chr1 32 0 M 33 0 M 34 0 M
+1	generated_158	chr1 32 0 M 33 0 M
+2	generated_181	chr1 30 0 H	chr1 32 0 M
+2	generated_200	chr1 31 0 H	chr1 32 0 M
+1	generated_262	chr1 32 1 M 33 1 M 34 1 M 35 1 M
+1	generated_305	chr1 32 1 M 33 1 M 34 1 M 35 1 M
+1	generated_346	chr1 32 1 M 33 1 M 34 1 M 35 1 M 36 1 M
+1	generated_358	chr1 32 1 M 33 1 M 34 1 M 35 1 M 36 1 M
+1	generated_389	chr1 32 1 M 33 1 M 34 1 M 35 1 M
+2	generated_6	chr1 30 0 H	chr1 33 0 M
+2	generated_8	chr1 30 1 H	chr1 33 1 M
+2	generated_18	chr1 30 0 H	chr1 33 0 M
+2	generated_32	chr1 30 1 H	chr1 33 1 M
+2	generated_36	chr1 31 0 H	chr1 33 0 M
+2	generated_47	chr1 31 1 H	chr1 33 1 M
+2	generated_49	chr1 31 0 H	chr1 33 0 M
+2	generated_58	chr1 31 0 H	chr1 33 0 M
+2	generated_68	chr1 31 0 H	chr1 33 0 M
+2	generated_115	chr1 31 0 H	chr1 33 0 M 34 0 M
+1	generated_151	chr1 33 1 M 34 1 M
+2	generated_170	chr1 31 1 H	chr1 33 1 M 34 1 M
+1	generated_171	chr1 33 0 M 34 0 M
+1	generated_175	chr1 33 0 M 34 1 M
+1	generated_177	chr1 33 1 M 34 1 M
+2	generated_194	chr1 32 0 H	chr1 33 0 M
+1	generated_223	chr1 33 0 M 34 0 M
+1	generated_257	chr1 33 0 M 34 0 M 35 0 M
+1	generated_279	chr1 33 0 M 34 0 M
+1	generated_281	chr1 33 0 M 34 0 M 35 0 M 36 0 M
+1	generated_282	chr1 33 0 M 34 0 M 35 0 M 36 0 M
+1	generated_352	chr1 33 1 M 34 1 M 35 1 M 36 1 M
+1	generated_384	chr1 33 1 M 34 1 M 35 1 M
+2	generated_31	chr1 30 1 H	chr1 34 1 M
+2	generated_43	chr1 31 1 H	chr1 34 1 M
+2	generated_71	chr1 32 1 H	chr1 34 1 M
+1	generated_232	chr1 34 1 M 35 1 M 36 1 M
+1	generated_375	chr1 34 0 M 35 0 M 36 0 M
+2	generated_4	chr1 31 1 H	chr1 35 1 M
+2	generated_21	chr1 31 0 H	chr1 35 0 M
+2	generated_40	chr1 33 0 H	chr1 35 0 M
+2	generated_44	chr1 33 0 H	chr1 35 0 M
+2	generated_46	chr1 34 0 H	chr1 35 0 M
+2	generated_61	chr1 33 0 H	chr1 35 0 M
+2	generated_63	chr1 33 0 H	chr1 35 0 M
+2	generated_65	chr1 33 0 H	chr1 35 0 M
+2	generated_82	chr1 32 1 H	chr1 35 1 M
+2	generated_103	chr1 34 1 H	chr1 35 1 M
+2	generated_104	chr1 33 1 H 34 1 H	chr1 35 1 M
+2	generated_125	chr1 34 0 H	chr1 35 0 M
+2	generated_143	chr1 32 1 H	chr1 35 1 M
+2	generated_183	chr1 31 0 H	chr1 35 0 M
+1	generated_287	chr1 35 0 M 36 0 M
+2	generated_27	chr1 33 0 H	chr1 36 0 M
+2	generated_29	chr1 33 0 H	chr1 36 0 M
+2	generated_70	chr1 34 0 H	chr1 36 0 M
+2	generated_81	chr1 34 1 H	chr1 36 1 M
+2	generated_140	chr1 33 0 H 34 0 H	chr1 36 0 M
+2	generated_159	chr1 33 1 H 34 1 H	chr1 36 1 M
+2	generated_160	chr1 31 1 H	chr1 36 1 M
+2	generated_216	chr1 25 1 H	chr1 37 1 M
+1	generated_235	chr1 37 0 M 38 0 M
+1	generated_243	chr1 37 0 M 38 0 M 39 0 M
+1	generated_247	chr1 37 0 M 38 0 M 39 0 M
+2	generated_280	chr1 20 1 H	chr1 37 1 M
+1	generated_300	chr1 37 1 M 38 1 M
+1	generated_301	chr1 37 0 M 38 0 M 39 0 M
+1	generated_347	chr1 37 1 M 38 1 M 39 1 M
+1	generated_370	chr1 37 0 M 38 0 M
+1	generated_393	chr1 37 1 M 38 1 M 39 1 M
+2	generated_51	chr1 37 1 H	chr1 38 1 M
+2	generated_251	chr1 23 1 H	chr1 38 1 M
+2	generated_261	chr1 20 1 H 21 1 H	chr1 38 1 M
+1	generated_269	chr1 38 0 M 39 0 M
+2	generated_12	chr1 37 0 H	chr1 39 0 M
+2	generated_16	chr1 37 0 H	chr1 39 0 M
+2	generated_22	chr1 37 0 H	chr1 39 0 M
+2	generated_38	chr1 38 1 H	chr1 39 1 M
+2	generated_75	chr1 38 0 H	chr1 39 0 M
+2	generated_198	chr1 37 0 H	chr1 39 0 M
+2	generated_225	chr1 30 1 H	chr1 40 1 M
+2	generated_227	chr1 35 0 H	chr1 40 1 M
+1	generated_270	chr1 40 0 M 41 1 M
+1	generated_320	chr1 40 0 M 41 1 M
+1	generated_339	chr1 40 1 M 41 0 M
+1	generated_387	chr1 40 0 M 41 1 M
+2	generated_52	chr1 40 0 H	chr1 41 1 M
+2	generated_96	chr1 40 0 H	chr1 41 0 M
+2	generated_110	chr1 40 1 H	chr1 41 0 M
+2	generated_129	chr1 40 0 H	chr1 41 1 M
+2	generated_226	chr1 32 0 H	chr1 41 1 M
+1	generated_325	chr1 41 0 M 42 1 M
+1	generated_314	chr1 42 0 M 43 0 M
+2	generated_237	chr1 29 1 H	chr1 43 1 M
+1	generated_331	chr1 43 0 M 44 0 M
+2	generated_0	chr1 43 0 H	chr1 44 0 M
+1	generated_233	chr1 44 0 M 45 0 M
+1	generated_236	chr1 44 0 M 45 0 M
+1	generated_252	chr1 44 0 M 45 0 M
+1	generated_263	chr1 44 0 M 45 0 M
+1	generated_275	chr1 44 0 M 45 0 M
+1	generated_323	chr1 44 0 M 45 0 M
+1	generated_350	chr1 44 0 M 45 0 M
+1	generated_374	chr1 44 1 M 45 1 M
+1	generated_390	chr1 44 1 M 45 1 M
+1	generated_391	chr1 44 1 M 45 1 M
+2	generated_128	chr1 43 0 H	chr1 45 0 M
+2	generated_190	chr1 44 0 H	chr1 45 0 M
+2	generated_202	chr1 44 0 H	chr1 45 0 M
+1	generated_306	chr1 46 0 M 47 0 M
+1	generated_315	chr1 46 1 M 47 1 M
+1	generated_318	chr1 46 1 M 47 1 M
+1	generated_380	chr1 46 0 M 47 0 M
+2	generated_10	chr1 46 1 H	chr1 47 1 M
+2	generated_219	chr1 42 0 H	chr1 47 0 M
+1	generated_234	chr1 47 1 M 48 1 M
+1	generated_344	chr1 47 0 M 48 0 M
+1	generated_360	chr1 47 1 M 48 1 M
+1	generated_379	chr1 47 0 M 48 0 M
+2	generated_57	chr1 47 0 H	chr1 48 0 M
+2	generated_119	chr1 47 0 H	chr1 48 0 M
+1	generated_319	chr1 49 0 M 50 0 M
+1	generated_349	chr1 49 0 M 50 0 M
+2	generated_33	chr1 49 0 H	chr1 50 0 M
+2	generated_114	chr1 49 1 H	chr1 50 1 M
+2	generated_120	chr1 49 0 H	chr1 50 0 M
+2	generated_209	chr1 45 1 H	chr1 50 1 M
+2	generated_285	chr1 40 1 H	chr1 50 1 M
+1	generated_327	chr1 51 0 M 52 0 M
+1	generated_343	chr1 51 1 M 52 1 M
+1	generated_397	chr1 51 1 M 52 1 M
+2	generated_133	chr1 51 0 H	chr1 52 0 M
+2	generated_166	chr1 51 1 H	chr1 52 1 M
+2	generated_246	chr1 37 0 H 38 0 H	chr1 52 0 M
+1	generated_355	chr1 52 1 M 53 1 M
+1	generated_248	chr1 53 0 M 54 0 M
+1	generated_249	chr1 53 0 M 54 0 M
+1	generated_253	chr1 53 0 M 54 0 M
+1	generated_259	chr1 53 0 M 54 0 M
+1	generated_283	chr1 53 0 M 54 0 M
+1	generated_297	chr1 53 0 M 54 0 M
+1	generated_316	chr1 53 1 M 54 1 M
+1	generated_362	chr1 53 0 M 54 0 M
+1	generated_378	chr1 53 1 M 54 1 M
+1	generated_388	chr1 53 1 M 54 1 M
+1	generated_392	chr1 53 0 M 54 0 M
+2	generated_35	chr1 53 1 H	chr1 54 1 M
+2	generated_48	chr1 53 0 H	chr1 54 0 M
+2	generated_60	chr1 53 0 H	chr1 54 0 M
+2	generated_148	chr1 51 1 H	chr1 54 1 M
+2	generated_188	chr1 53 0 H	chr1 54 0 M
+2	generated_195	chr1 53 0 H	chr1 54 0 M
+2	generated_196	chr1 53 0 H	chr1 54 0 M
+2	generated_245	chr1 43 1 H	chr1 54 1 M
+1	generated_313	chr1 54 1 M 55 1 M 56 1 M
+2	generated_111	chr1 53 0 H	chr1 55 0 M
+2	generated_142	chr1 54 1 H	chr1 55 1 M
+1	generated_274	chr1 55 0 M 56 0 M
+2	generated_276	chr1 48 0 H	chr1 55 0 M
+1	generated_309	chr1 55 0 M 56 0 M
+1	generated_368	chr1 55 1 M 56 1 M
+1	generated_381	chr1 55 1 M 56 1 M 57 1 M
+2	generated_39	chr1 55 1 H	chr1 56 1 M
+2	generated_50	chr1 55 1 H	chr1 56 1 M
+2	generated_89	chr1 46 1 H	chr1 56 1 M
+1	generated_94	chr1 56 0 M 57 0 M
+2	generated_97	chr1 55 1 H	chr1 56 1 M
+1	generated_105	chr1 56 1 M 57 1 M
+2	generated_135	chr1 55 1 H	chr1 56 1 M 57 1 M
+2	generated_147	chr1 55 0 H	chr1 56 0 M
+2	generated_222	chr1 50 0 H	chr1 56 0 M
+2	generated_224	chr1 50 1 H	chr1 56 0 M
+1	generated_239	chr1 56 0 M 57 0 M
+1	generated_240	chr1 56 1 M 57 1 M
+2	generated_241	chr1 47 0 H	chr1 56 0 M 57 0 M
+2	generated_242	chr1 44 1 H	chr1 56 1 M
+1	generated_256	chr1 56 1 M 57 1 M
+1	generated_303	chr1 56 0 M 57 0 M
+1	generated_394	chr1 56 0 M 57 0 M
+2	generated_2	chr1 55 0 H	chr1 57 0 M
+2	generated_41	chr1 56 0 H	chr1 57 0 M
+2	generated_106	chr1 56 0 H	chr1 57 0 M
+2	generated_144	chr1 54 0 H	chr1 57 0 M
+2	generated_191	chr1 56 0 H	chr1 57 0 M
+2	generated_193	chr1 56 1 H	chr1 57 1 M
+2	generated_201	chr1 55 0 H	chr1 57 0 M
+1	generated_307	chr1 59 0 M 60 0 M
+1	generated_365	chr1 59 1 M 60 1 M
+2	generated_74	chr1 59 0 H	chr1 60 0 M
+2	generated_197	chr1 59 0 H	chr1 60 0 M
+1	generated_336	chr1 60 0 M 61 0 M
+2	generated_87	chr1 58 1 H	chr1 61 1 M
+2	generated_91	chr1 57 0 H	chr1 61 0 M
+2	generated_138	chr1 60 0 H	chr1 61 0 M

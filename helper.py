@@ -206,7 +206,7 @@ def compute_cpr(recovered_haplo: NDArray[(Any, ), int],
 def read_true_hap(gt_file: str, pos_file: str) -> NDArray[(Any, Any), int]:
 	"""
 	gt_file:
-		File containing true haplotypes (k haplotypes)
+		File containing true genomes (k genomes)
 	pos_file:
 		File containing SNP positions (n positions)
 
@@ -221,10 +221,10 @@ def read_true_hap(gt_file: str, pos_file: str) -> NDArray[(Any, Any), int]:
 
 	with open(pos_file, "r") as f:
 		pos_str = f.readline().split()
-		pos = np.array([int(ps) for ps in pos_str]) # Convert to int, assuming pos is 0-indexed
+		pos = np.array([int(ps) - 1 for ps in pos_str]) # Convert to int, assuming pos_file is 1-indexed
 
 	true_hap = []
-	base_int = {'A': 1, 'C': 2, 'G': 3, 'T': 4}  # mapping of base to int
+	base_int = {'A': 1, 'C': 2, 'G': 3, 'T': 4, '-': 0}  # mapping of base to int
 	with open(gt_file, "r") as f:
 		while True:
 			line = f.readline()
@@ -236,4 +236,30 @@ def read_true_hap(gt_file: str, pos_file: str) -> NDArray[(Any, Any), int]:
 
 	return np.array(true_hap)
 
-		
+
+def read_hap(hap_file: str) -> NDArray[(Any, Any), int]:
+    """
+    hap_file:
+        File containing haplotypes
+    
+    Returns
+        k x n numpy array of haplotypes
+    
+    """
+    
+    if not path.isfile(hap_file):
+        raise OSError("Haplotype file not found.")
+    
+    base_int = {'A': 1, 'C': 2, 'G': 3, 'T': 4, '-': 0}  # mapping of base to int
+    hap_list = []
+    with open(hap_file, "r") as f:
+        while True:
+            line = f.readline()
+            if not line:
+                break
+            else:
+                if line.split()[0] != 'Haplotype':
+                    hap = np.array([base_int[c] for c in line.strip()])
+                    hap_list.append(hap.astype('int'))
+    
+    return np.array(hap_list)		

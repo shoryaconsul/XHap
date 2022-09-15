@@ -5,6 +5,9 @@ ART="art_bin_ChocolateCherryCake/art_illumina"  # Path to ART
 BWA="bwa-0.7.17/bwa"  # Path to BEA aligner
 FREEBAYES="./freebayes-1.3.6"  # Path to FreeBayes
 EXTRACT_MATRIX="./ExtractMatrix"  # Path to ExtractMatrix executable
+CAECSEQ="./CAECseq_haplo.py"  # Path to CAECSeq python file
+HAPCUT="./HapCUT2"  # Folder containing HapCUT2 and htslib source files
+EXTRACTHAIRS="./HapCUT2/build/extractHAIRS"  # Path to extractHAIRs executable from HapCUT2
 VERBOSE=false
 
 while getopts f:o:n:v FLAG
@@ -42,7 +45,7 @@ fi
 if [[ $MODEL == "poisson" ]];then
   python2 $HAPGEN -f $REF -o $OUTHEAD --model $MODEL -s "[0.04,0.01,0.01]" -m "{'A':'GCT','G':'ACT','C':'TAG','T':'ACG'}" -p $HAPNUM
 elif [[ $MODEL == "lognormal" ]];then
-  python2 $HAPGEN -f $REF -o $OUTHEAD --model $MODEL -s "[2.70,0,0]" --sdlog "[0.693,0,0]" -m "{'A':'GCT','G':'ACT','C':'TAG','T':'ACG'}" -p $HAPNUM
+  python2 $HAPGEN -f $REF -o $OUTHEAD --model $MODEL -s "[4.63,0,0]" --sdlog "[0.693,0,0]" -m "{'A':'GCT','G':'ACT','C':'TAG','T':'ACG'}" -p $HAPNUM
 else
   echo "Invalid model specified"
   exit 1
@@ -66,9 +69,9 @@ cat "$HAPFOLDER/"*".fa" > "$HAPFOLDER/combined.fa"  # Combined FASTA files
 # Generate paired-end reads reads using ART
 # -l [read length] -f [coverage] -m [mean insert length] -s [sd of insert length]
 if [[ $VERBOSE = true ]];then
-  $ART -p -na -i "$HAPFOLDER/combined.fa" -l 250 -f 60 -m 550 -s 5 -o "$HAPFOLDER/haptest"
+  $ART -p -na -i "$HAPFOLDER/combined.fa" -l 150 --seqSys HS25 -f 5 -m 550 -s 5 -o "$HAPFOLDER/hap"
 else   
-  $ART -p -na -q -i "$HAPFOLDER/combined.fa" -l 250 -f 60 -m 550 -s 5 -o "$HAPFOLDER/haptest"
+  $ART -p -na -q -i "$HAPFOLDER/combined.fa" -l 150 --seqSys HS25 -f 5 -m 550 -s 5 -o "$HAPFOLDER/hap"
 fi
 rm "$HAPFOLDER/"*".aln"
 echo "Generated reads"
@@ -76,13 +79,29 @@ echo "Generated reads"
 # Align reads
 RG_HEADER="@RG\tID:rg1\tSM:sample1"
 $BWA index $REF
-$BWA mem -t 5 -R $RG_HEADER $REF "$HAPFOLDER/"*".fq" > "$HAPFOLDER/$OUTHEAD.sam"  # t is number of threads
+$BWA mem -t 5 -R $RG_HEADER $REF "$HAPFOLDER/hap"*".fq" > "$HAPFOLDER/$OUTHEAD.sam"  # t is number of threads
 samtools sort "$HAPFOLDER/$OUTHEAD.sam" -o "$HAPFOLDER/$OUTHEAD""_sorted.bam"
 
 # Generate read-SNP matrix
+THRESH=0.2
+HAPLEN=$(awk '{print length }' $REF | tail -1)  # Find length of reference genome
+$EXTRACT_MATRIX -f $REF -s "$HAPFOLDER/$OUTHEAD.sam" -t $THRESH -z "$HAPFOLDER/$OUTHEAD" -k $HAPNUM \
+-b 0 -e $HAPLEN -q 0 -l 100 -i 560 
+
+# CAECSeq
+python $CAECSEQ "$HAPFOLDER/$OUTHEAD" -k $HAPNUM -n 3
 
 # Variant calling
-$FREEBAYES -f $REF -p 2 "$HAPFOLDER/$OUTHEAD""_sorted.bam" > "$HAPFOLDER/$OUTHEAD.vcf"
+$FREEBAYES -f $REF -p $HAPNUM "$HAPFOLDER/$OUTHEAD""_sorted.bam" > "$HAPFOLDER/$OUTHEAD""_variants.vcf"
+
+# Generate SNP fragment matrtix for SDHap/HapCUT
+cd $HAPCUT
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(pwd)/htslib"  # Add to path
+cd ..
+$EXTRACTHAIRS --VCF "$HAPFOLDER/$OUTHEAD""_variants.vcf" --bam "$HAPFOLDER/$OUTHEAD""_sorted.bam" --maxIS 3000 --out "$HAPFOLDER/$OUTHEAD""_fragment_file.txt"
 
 : << 'COMMENT'
+
+B=$(echo | awk -v c=$C -v d=$D '{print c / d}')
+
 COMMENT

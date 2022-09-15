@@ -50,8 +50,9 @@ class SNVMatrixDataset(Dataset):
         """
         SNV_file: txt file containing SNV matrix
         """
-        self.SNV_matrix = np.loadtxt(SNV_file, dtype=int)
-    
+        SNV_matrix_raw = np.loadtxt(SNV_file, dtype=int)
+        self.SNV_matrix = SNV_matrix_raw[np.sum(SNV_matrix_raw != 0, axis=1) > 1]
+	 
     def __len__(self):
         return np.shape(self.SNV_matrix)[0]
     
@@ -126,14 +127,14 @@ def learn_embed(dataset: Dataset, num_epoch: int,
 
 		# Create handlers
 		c_handler = logging.StreamHandler()
-		f_handler = logging.FileHandler('embed_train.log')
+		f_handler = logging.FileHandler('embed_train.log', mode='w')
 		c_handler.setLevel(logging.WARNING)
 		f_handler.setLevel(logging.INFO)
 		f_handler.addFilter(MyFilter(logging.INFO))
 
 		# Create formatters and add it to handlers
 		c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-		f_format = logging.Formatter('%(message)s')
+		f_format = logging.Formatter('%(asctime)s %(message)s')
 		c_handler.setFormatter(c_format)
 		f_handler.setFormatter(f_format)
 
