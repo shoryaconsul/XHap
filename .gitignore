@@ -1,6 +1,7 @@
 token
 corr_xformer
 read_AE
+*.npz
 
 Simulated_data/
 generate_data/argcmd_test.cpp
