@@ -10,6 +10,7 @@ generate_data/reference_1.*
 !generate_data/reference_1.fasta
 generate_data/helper_original.py
 generate_data/hap*
+generate_data/cov*
 
 !generate_data/art_bin_ChocolateCherryCake/
 generate_data/art_bin_ChocolateCherryCake/*
