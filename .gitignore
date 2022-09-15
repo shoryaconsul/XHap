@@ -13,6 +13,13 @@ generate_data/helper_original.py
 generate_data/hap*
 generate_data/cov*
 
+generate_data/lactococcus_phage.fa.amb
+generate_data/lactococcus_phage.fa.ann
+generate_data/lactococcus_phage.fa.bwt
+generate_data/lactococcus_phage.fa.fai
+generate_data/lactococcus_phage.fa.pac
+generate_data/lactococcus_phage.fa.sa
+
 !generate_data/art_bin_ChocolateCherryCake/
 generate_data/art_bin_ChocolateCherryCake/*
 !generate_data/art_bin_ChocolateCherryCake/art_illumina
