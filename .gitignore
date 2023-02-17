@@ -24,7 +24,7 @@ generate_data/hap*
 generate_data/cov*
 generate_data/pbsim_test
 <<<<<<< HEAD
-generate_data/pbsim2
+# generate_data/pbsim2
 =======
 >>>>>>> 297f03b750b7e33473a972a00a24be2066fb4118
 
