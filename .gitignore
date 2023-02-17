@@ -46,3 +46,4 @@ generate_data/bwa-0.7.17/*
 generate_data/HapCUT2/
 generate_data/haptest/
 
+*.fa.*
