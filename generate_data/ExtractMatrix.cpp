@@ -30,7 +30,7 @@ string binary(int number, stringstream& strs)
 	return  strs.str();
 }
 
-vector<string> tokenize(const string& str,const string& delimiters)
+vector<string> tokenize(const string& str, const string& delimiters)
 {
 	vector<string> tokens;	
 	string::size_type lastPos = 0, pos = 0;  
@@ -64,11 +64,23 @@ vector<string> tokenize(const string& str,const string& delimiters)
 	return tokens;
 }
 
+int num_chimeric_aln(const vector<string>& tokens){
+	int res = 1;
+	for(string tok : tokens){
+		if(tok.rfind("SA:Z:", 0) == 0){  // if token starts with "SA:Z:"
+			res = count(tok.begin(), tok.end(), ';') + 1;
+		}
+	}
+	return res;
+}
+
+// bool comp_tokens(const vector<string>& t1, const vector<string>& t2) {
+// 		return atoi(t1[3].c_str()) < atoi(t2[3].c_str());
+// 		}
+
 void parse_sam_line(const vector<string>& tokens, vector<int>& seq_b, double& a_score, char gap_quality, int& indels, int& al_start)
 {  
 	seq_b.clear();
-	indels = 0;
-	
   	bool foundAscore = false;
   	for(int j = 11; j< tokens.size();j++)
 	{
@@ -142,74 +154,141 @@ void parse_sam_line(const vector<string>& tokens, vector<int>& seq_b, double& a_
 	}  
 }
 
-int parseSAMpaired( string al, double min_qual, int min_length, int max_insertln, char gap_quality, double& mean_length, vector<vector<int> >& Read_matrix, int reconstruction_start, int reconstruction_end, int& total_count, int gene_length, string zonename, vector<vector<int> >& ReadSeq, vector<int>& StartSeq, vector<int>& EndSeq)
+void parse_sam_splitread(vector<vector<string>>& tokens_vec, vector<int>& seq_b, double& a_score, char gap_quality, int& indels, int& al_start, int& qual)
+{
+	seq_b.clear();
+	indels = 0;
+
+	if(tokens_vec.size() == 1)
+	{
+		parse_sam_line(tokens_vec[0], seq_b, a_score,  gap_quality, indels, al_start);
+		qual = atoi(tokens_vec[0][4].c_str());
+		return; 
+	}
+
+
+	std::sort(tokens_vec.begin(), tokens_vec.end(), [](const vector<string>& t1, const vector<string>& t2) {
+		return atoi(t1[3].c_str()) < atoi(t2[3].c_str());
+		}
+	);  // sort split alignments by starting aligned position
+
+	// std::sort(tokens_vec.begin(), tokens_vec.end(), comp_tokens);
+	vector<string> seq_b_combined;
+
+	vector<int> seq_b_tmp;
+	double a_score_tmp;
+	int al_start_tmp;
+	int qual_tmp;
+	int Ngap = 0;
+
+	parse_sam_line(tokens_vec[0], seq_b, a_score,  gap_quality, indels, al_start);
+
+	for(int i=1; i < tokens_vec.size(); i++){ // Skip first element
+		vector<string> tok = tokens_vec[i];
+		parse_sam_line(tok, seq_b_tmp,  a_score_tmp,  gap_quality, indels, al_start_tmp);
+		a_score = a_score + a_score_tmp;
+		qual_tmp = atoi(tok[4].c_str());
+		if(qual_tmp < qual) {qual = qual_tmp;}  // Store lowest mapping quality
+
+		if(al_start_tmp - (al_start +   (int)seq_b.size())>0)  // Gap between split alignments
+		{
+			Ngap = al_start_tmp - (al_start + (int)seq_b.size());
+			vector<int> Ns(Ngap,0);
+			seq_b.insert(seq_b.end(), Ns.begin(), Ns.end());
+	      	seq_b.insert(seq_b.end(), seq_b_tmp.begin(), seq_b_tmp.end());
+		}
+		else{  // No gap between alignments
+			seq_b.erase(seq_b.begin() + (al_start_tmp - al_start), seq_b.end());
+			seq_b.insert(seq_b.end(), seq_b_tmp.begin(), seq_b_tmp.end());
+		}
+	}
+}
+
+int parseSAMpaired(string al, double min_qual, int min_length, int max_insertln, char gap_quality, double& mean_length, vector<vector<int> >& Read_matrix, int reconstruction_start, int reconstruction_end, int& total_count, int gene_length, string zonename, vector<vector<int> >& ReadSeq, vector<int>& StartSeq, vector<int>& EndSeq)
 {
 	string line;
-  	vector<string> tokens, tokens_1, tokens_2;
+  	vector<string> tokens;
+	vector<vector<string>> tokens_vec_1, tokens_vec_2;
 	int pair_counter = 0, seq_counter =0, singleton_counter = 0;
   	vector<int> seq_b, seq_b_pairs;
   	double a_score,a_score_pairs;
 	int indels, indels_pairs;
+	int qual, qual_pairs;
   	int al_start, al_start_pairs;
-    	string sRC_1, sRC_2, pairs_1, pairs_2;
+    string sRC_1, sRC_2;
   	bool part_1 = false, is_pair = false;
+	int rcount_1 = 0, rcount_2 = 0;
   	string id, id_1;
   	int RC;
 	vector<vector<int> > lowQSseq;
   
 	int filtered_counter1 = 0, filtered_counter2 = 0;
 	int mapped_counter = 0, unmapped_counter = 0; 
-int filtered_cond2 = 0;
+	int filtered_cond2 = 0;
 
 	ifstream inf6(al.c_str(),ios::in);
   	while( getline(inf6,line,'\n') )
 	{
-    		if(line[0] == '@')
-      			continue;
-	    	tokens = tokenize(line,"\t");
+    	if(line[0] == '@')
+      		continue;
+	    tokens = tokenize(line,"\t");
+		
 		if(tokens.size() <5)
 		{
 			cout << "Problem with sam file..." << endl;
 			return 1;
 		}
 		id =  tokens[0];
-	    	total_count++;
+	    total_count++;
 				
-	    	RC =  atoi( tokens[1].c_str());
-	    	stringstream strs;
-	    	string sRC = binary(RC,  strs);
+	    RC = atoi( tokens[1].c_str());
+	    stringstream strs;
+	    string sRC = binary(RC,  strs);
 		int sz = sRC.size();
-		if(sz > 8) // bit9-12 should be 0
+		if(sz > 8 && RC < 2048) // bit9-12 should be 0 if not chimeric alignment
 	      	{ filtered_counter1++;	continue;}
-	        if(sRC[sz-3] == '1' ||  sRC[sz-4]  == '1'  ) // bit 3-4 should be 0
+	    if(sRC[sz-3] == '1' ||  sRC[sz-4]  == '1') // bit 3-4 should be 0
 	      	{ filtered_counter2++;	continue;}
-	    	if(part_1 && id == id_1 && sz == 8 && sRC[0] == '1')
-		{
-	      		is_pair = true;
-	      		part_1 = false;
-	      		pairs_2 = line;
-	      		sRC_2 = sRC;
-	      		tokens_2 = tokens;
-	      		pair_counter++;
-	   	}
-	    	else
-		{
-	     		part_1 = true;
-	      		is_pair = false;
-	      		pairs_1 = line;
-	      		sRC_1 = sRC;
-	      		id_1 = id;
-	      		tokens_1 = tokens;
-	      		singleton_counter++;
+	    if(part_1 && id == id_1 && sRC[sz-8] == '1'){  // processing paired read
+			if(rcount_2 == 0){  // primary alignment of paired read
+				tokens_vec_2.clear();
+				rcount_2 = num_chimeric_aln(tokens);
+				pair_counter++;
+			}
+			else{
+				rcount_2--;
+			}
+			tokens_vec_2.push_back(tokens);
+
+			if(rcount_2 == 1){  // read all alignments for this read
+				part_1 = false;
+				is_pair = true;
+				rcount_2 = 0;
+			}
+		}
+	    else{	// processing first of read pair
+			is_pair = false;
+			id_1 = id;
+
+			if(rcount_1 == 0){
+				tokens_vec_1.clear();
+				rcount_1 = num_chimeric_aln(tokens);
+				singleton_counter++;
+			}
+			else{
+				rcount_1--;
+			}
+			tokens_vec_1.push_back(tokens);
+			
+			if(rcount_1 == 1){  // read all alignments for this read
+				part_1 = true;
+				rcount_1 = 0;
+			}
 	   	}
 		
-	    	if(is_pair)
-		{	
-	      		parse_sam_line(tokens_1, seq_b,  a_score,  gap_quality, indels, al_start );
-	       		parse_sam_line(tokens_2, seq_b_pairs,  a_score_pairs,  gap_quality, indels_pairs, al_start_pairs );
-		
-	      		int qual = atoi(tokens_1[4].c_str());
-	      		int qual_pairs = atoi(tokens_2[4].c_str());
+	    if(is_pair){
+			parse_sam_splitread(tokens_vec_1, seq_b,  a_score,  gap_quality, indels, al_start, qual);
+			parse_sam_splitread(tokens_vec_2, seq_b_pairs,  a_score_pairs,  gap_quality, indels_pairs, al_start_pairs, qual_pairs);
 
 	      		if(// seq_b.size() >= min_length && seq_b_pairs.size() >= min_length 
 //				&& seq_b.size() !=0 && seq_b_pairs.size() !=0 && 
@@ -230,7 +309,7 @@ int filtered_cond2 = 0;
 	  				if(is_gap)
 					{
 						Nlength = al_start-(al_start_pairs +   (int)seq_b_pairs.size());
-	    					vector<int> Ns(Nlength,0);
+	    				vector<int> Ns(Nlength,0);
 						seq_b_pairs.insert(seq_b_pairs.end(), Ns.begin(), Ns.end());
 						seq_b_pairs.insert(seq_b_pairs.end(), seq_b.begin(), seq_b.end());
 						SEQ_combined = seq_b_pairs; 
@@ -345,9 +424,9 @@ int filtered_cond2 = 0;
 	   	 }
 	}
 	std::ofstream writefile1;
-        std::ofstream writefile2;
-        std::ofstream writefile3;
-        std::ofstream writefile4;
+    std::ofstream writefile2;
+    std::ofstream writefile3;
+    std::ofstream writefile4;
 	std::string name = zonename;
 	writefile1.open(name+"_lowQSseq.txt");
 	writefile2.open(name+"_StartSeq.txt");
