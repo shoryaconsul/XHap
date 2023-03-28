@@ -4,6 +4,8 @@ read_AE
 *.npz
 *.log
 
+.ipynb_checkpoints
+
 Ranbow.zip
 ranbow_*
 
@@ -44,3 +46,6 @@ generate_data/HapCUT2/
 generate_data/haptest/
 
 *.fa.*
+
+*.ipynb
+!Transformers_Kernel_Kmeans-v4.ipynb
