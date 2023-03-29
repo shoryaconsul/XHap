@@ -46,7 +46,7 @@ generate_data/HapCUT2/
 generate_data/haptest/
 
 generate_data/ExtractMatrix_v*
-generate_data/ExtratMatrix_longread_v*
+generate_data/ExtractMatrix_longread_v*
 
 *.fa.*
 
