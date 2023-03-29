@@ -25,7 +25,7 @@ generate_data/helper_original.py
 generate_data/hap*
 generate_data/cov*
 generate_data/pbsim_test
-
+generate_data/cpp_debug
 
 generate_data/lactococcus_phage.fa.amb
 generate_data/lactococcus_phage.fa.ann
@@ -44,6 +44,9 @@ generate_data/bwa-0.7.17/*
 
 generate_data/HapCUT2/
 generate_data/haptest/
+
+generate_data/ExtractMatrix_v*
+generate_data/ExtratMatrix_longread_v*
 
 *.fa.*
 
