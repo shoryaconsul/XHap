@@ -20,7 +20,7 @@ from matplotlib import pyplot as plt
 
 from read_embeddings import save_ckp, load_ckp, MyFilter, \
     ReadAE, SNVMatrixDataset, learn_embed
-from ScheduleOptim import ScheduledOptim
+# from ScheduleOptim import ScheduledOptim
 from helper import * # read_hap, read_true_hap, compute_cpr
 # from kernel_kmeans import KernelKMeans
 from kernel_kmeans_torch import KernelKMeans
@@ -240,7 +240,8 @@ def train_xhap(outhead: str, d_model: int = 128, num_hap: int = 2, num_epoch: in
     SNVdata = SNVMatrixDataset(datapath)
     SNV_matrix = np.loadtxt(datapath, dtype=int)
     SNV_matrix = SNV_matrix[np.sum(SNV_matrix != 0, axis=1) > 1]  # Removing uninformative reads
-    
+    print('SNP matrix: ', SNV_matrix.shape)
+
     
     nSNP = SNV_matrix.shape[1] # Number of SNVs
     num_read = len(SNVdata)  # Number of reads
@@ -290,7 +291,7 @@ def train_xhap(outhead: str, d_model: int = 128, num_hap: int = 2, num_epoch: in
     xform_train_loss_arr = []
     mec = []
     cpr = []
-    xformer_savefile = 'generate_data/' + outhead + '_xhap_ckp'
+    xformer_savefile = 'generate_data/' + outhead + '/xhap_ckp'
 
 
     hap_origin = det_memhap(SNVdata, embedAE, corr_xformer, num_clusters=num_hap, device=device)  # Initial haplotype memberships
@@ -347,7 +348,7 @@ def train_xhap(outhead: str, d_model: int = 128, num_hap: int = 2, num_epoch: in
                                       hap_origin[batch_idx],
                                       W_sup_dev[batch_idx][:,batch_idx],
                                       W_mask_dev[batch_idx][:,batch_idx],
-                                      lambda_reg=1e2) # + 0.1*AE_loss
+                                      lambda_reg=1e6) # + 0.1*AE_loss
             xform_loss.backward()
             xform_optimizer.step()
             xform_train_loss += xform_loss.item()
@@ -371,17 +372,20 @@ def train_xhap(outhead: str, d_model: int = 128, num_hap: int = 2, num_epoch: in
         time_cpu.append(t3-t2)
 
         mec_curr = MEC(SNV_matrix, hap_matrix)
-        if mec_curr < mec_min:
+        if mec_curr <= mec_min:
             mec_min = mec_curr
             W_best = readW(SNVdata, embedAE, corr_xformer, device=device)
             hap_origin_best = 1*hap_origin
             hap_matrix_best = 1*hap_matrix
-            epoch_best = epoch
+            epoch_best = 1*epoch
+            print('Epoch = %d, MEC = %d' %(epoch, mec_curr))
 
             xhap_best = {
                 'embed_ae': embedAE.state_dict(),
                 'xformer': corr_xformer.state_dict()
                         }
+            torch.save(xhap_best, 'generate_data/' + outhead + '/xhap_model')
+
         mec.append(mec_curr)
 
         if check_cpr:
@@ -389,6 +393,20 @@ def train_xhap(outhead: str, d_model: int = 128, num_hap: int = 2, num_epoch: in
             if cpr_curr > cpr_max:
                 cpr_max = cpr_curr
             cpr.append(cpr_curr)
+
+            if (mec_curr == mec_min and 
+                cpr_curr > compute_cpr(hap_matrix_best, true_haplo)):  # Store better solution
+                W_best = readW(SNVdata, embedAE, corr_xformer, device=device)
+                hap_origin_best = 1*hap_origin
+                hap_matrix_best = 1*hap_matrix
+                epoch_best = 1*epoch
+                print('Epoch = %d, MEC = %d' %(epoch, mec_curr))
+
+                xhap_best = {
+                    'embed_ae': embedAE.state_dict(),
+                    'xformer': corr_xformer.state_dict()
+                            }
+                torch.save(xhap_best, 'generate_data/' + outhead + '/xhap_model')
 
         # Display epoch training loss
         logger.info("epoch : {}/{}, loss = {:.2f}".format(epoch + 1, num_epoch, xform_train_loss))
@@ -429,6 +447,9 @@ def train_xhap(outhead: str, d_model: int = 128, num_hap: int = 2, num_epoch: in
 
             print('Pearson correlation coefficient of MEC and CPR: %.3f' %(np.corrcoef(mec, cpr)[0, 1]))
             print(list(zip(np.array(mec)[idx_best], np.array(cpr)[idx_best])))
+
+            # idx_same = np.where(np.diff(mec) == 0)
+            # print(np.array(mec)[idx_same], np.array(cpr)[idx_same])
         else:  # CPR not computed
             plt.figure(figsize=(10,6))
             plt.plot(mec)
@@ -444,14 +465,14 @@ def train_xhap(outhead: str, d_model: int = 128, num_hap: int = 2, num_epoch: in
         np.savez('generate_data/' + outhead + '/haptest_xformer_res', rec_hap=hap_matrix_best,
                  rec_hap_origin=hap_origin_best)
 
-    torch.save(xhap_best, 'generate_data/' + outhead + '/xhap_model')
 
-    print('MAX CPR = %.3f' %cpr_max)
     if check_cpr:
+        print('MAX CPR = %.3f, CORRESPONDING MEC = %d' %(cpr_max, mec[np.argmax(cpr)]))
         cpr_best = np.amax(np.array(cpr)[np.array(mec) == mec_min])
-        return mec[epoch_best], cpr_best
+        print(np.array(cpr)[np.array(mec) == mec_min], np.argmin(mec))
+        return mec[epoch_best + 1], cpr_best
     else:
-        return mec[epoch_best], None
+        return mec[epoch_best + 1], None
 
 def readW(SNVdataset: SNVMatrixDataset, 
           ae: ReadAE, xformer: CorrTransformer,
