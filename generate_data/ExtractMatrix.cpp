@@ -74,10 +74,6 @@ int num_chimeric_aln(const vector<string>& tokens){
 	return res;
 }
 
-// bool comp_tokens(const vector<string>& t1, const vector<string>& t2) {
-// 		return atoi(t1[3].c_str()) < atoi(t2[3].c_str());
-// 		}
-
 void parse_sam_line(const vector<string>& tokens, vector<int>& seq_b, double& a_score, char gap_quality, int& indels, int& al_start)
 {  
 	seq_b.clear();
@@ -109,14 +105,13 @@ void parse_sam_line(const vector<string>& tokens, vector<int>& seq_b, double& a_
   	int sub_length =0;
   	for(int i =0; i< tokens[5].size();i++)
 	{
-    		if(isAlpha[i] == 1)
-		{
-      			sub_length_vec.push_back( atoi(tokens[5].substr(i-sub_length,sub_length).c_str()));
-      			symbols.push_back(tokens[5][i]);
-      			sub_length =0;
-    		}
-    		if(isAlpha[i] == 0)
-     			sub_length++;	
+    if(isAlpha[i] == 1){
+    	sub_length_vec.push_back( atoi(tokens[5].substr(i-sub_length,sub_length).c_str()));
+      	symbols.push_back(tokens[5][i]);
+      	sub_length =0;
+    }
+	if(isAlpha[i] == 0)
+     	sub_length++;	
 	}
   
   	int c =0;

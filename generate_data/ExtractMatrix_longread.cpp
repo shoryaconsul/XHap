@@ -575,7 +575,7 @@ int main(int argc, char* argv[]) {
 	        if (Read_matrix[i].size() != gene_length)
 			cout << "error!!!"<<endl;
 	}
-	cout <<  endl << "After parsing " << total_count << " reads in file " <<FASTAreads[0]<< ", there are "<<nReads<< " paired_end reads(mean lengths "<< mean_length/Read_matrix.size() << ") covering regions "<< reconstruction_start << "-" << reconstruction_end <<"."<< endl;
+	cout <<  endl << "After parsing " << total_count << " reads in file " <<FASTAreads[0]<< ", there are "<<nReads<< "reads(mean lengths "<< mean_length/Read_matrix.size() << ") covering regions "<< reconstruction_start << "-" << reconstruction_end <<"."<< endl;
 	
 	end = clock();	
 	cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
