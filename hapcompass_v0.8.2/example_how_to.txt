@@ -1,8 +1,0 @@
-# Running HapCompass with BAM file input
-java -Xmx1g -jar hapcompass.jar -bam example/example.bam -vcf example/62_ID0.vcf -o example/out
-
-# Running HapCompass with fragment file input
-java -Xmx1g -jar hapcompass.jar -f example/input_frags.txt -vcf example/62_ID0.vcf -o example/out
-
-# Running HapCompass in evaluation mode
-java -Xmx1g -jar hapcompass.jar -bam example/example.bam -vcf example/62_ID0.vcf -o example/dummy_out --evaluate example/out_MWER_solution.txt
