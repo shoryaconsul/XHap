@@ -1,9 +1,11 @@
 import numpy as np
 from os import path
-from itertools import permutations
+from itertools import permutations, product
+
+import torch
 
 import logging
-from typing import Any
+from typing import List, Tuple, Optional, Any
 from nptyping import NDArray
 
 
@@ -12,6 +14,7 @@ def save_ckp(state, checkpoint_path):
     state: checkpoint we want to save
     checkpoint_path: path to save checkpoint
     """
+
     f_path = checkpoint_path  # Save path
     torch.save(state, f_path)
 
@@ -165,8 +168,8 @@ def MEC(SNV_matrix: NDArray[(Any, Any), int],
 
 
 # evaluate the correct phasing rate
-def compute_cpr(recovered_haplo: NDArray[(Any, ), int], 
-	true_haplo: NDArray[(Any,), int]) -> float:
+def compute_cpr(recovered_haplo: NDArray[(Any, Any), int], 
+	true_haplo: NDArray[(Any, Any), int]) -> float:
 	"""
 	recovered_haplo:
 		k x n matrix of recovered haplotypes
@@ -224,7 +227,7 @@ def read_true_hap(gt_file: str, pos_file: str) -> NDArray[(Any, Any), int]:
 		pos = np.array([int(ps) - 1 for ps in pos_str]) # Convert to int, assuming pos_file is 1-indexed
 
 	true_hap = []
-	base_int = {'A': 1, 'C': 2, 'G': 3, 'T': 4, '-': 0}  # mapping of base to int
+	base_int = {'A': 1, 'C': 2, 'G': 3, 'T': 4, '-': 0, 'N': -1}  # mapping of base to int
 	with open(gt_file, "r") as f:
 		while True:
 			line = f.readline()
@@ -263,3 +266,138 @@ def read_hap(hap_file: str) -> NDArray[(Any, Any), int]:
                     hap_list.append(hap.astype('int'))
     
     return np.array(hap_list)		
+
+
+class PermDict:
+    """
+    This is a class to represent permutations when certain indices are interchangeable due to
+    the underlying object. For instance, permutations of [0, 1, 2] and [2, 1, 0] are equivalent
+    on an object [A, C, A].
+    
+    tups: Possible values for permutation indices. Values in same list are interchangeable.
+    pos: # Position in the permutation of interchangeable values
+    
+    For the above example, tups = [[0, 2], [1]], pos = [[0, 2], [1]]. The values [0, 2] are
+    interchangeable and occur at the 0-th and 2nd indices in the permutation.
+    """
+    
+    def __init__(self, perm_vals: List[list], pos_idx: List[List], numel: Optional[int]=None):
+        self.tups = perm_vals  # Possible values for permutation indices. Values in same tuple are interchangeable
+        self.pos = pos_idx  # Position in the permutation of interchangeable values
+        if numel is None:
+            pos_list = [p for pl in pos_idx for p in pl]
+            self.n = max(pos_list) + 1
+        else:
+            self.n = numel
+    
+def gen_perm(perm: PermDict) -> NDArray[int]:  # Generate next possible permutation for given configuration
+    
+    """
+    This is a generator function that generates all possible permutations given a PermDict object.
+    In effect, this generates all possible permutations by interchanging positions where equal
+    values exist in the object on which the permutations are invoked.
+    
+    Parameters
+    ----------
+    perm: PermDict
+        PermDict object to generate permutations from
+    
+    Returns
+    -------
+        NDArray: Permutation
+    """
+    
+    gen_list = [permutations(v) for v in perm.tups]
+    gen_perm_tup = product(*gen_list)
+    for perm_tup in gen_perm_tup:
+        perm_res = np.zeros(perm.n, dtype=int)
+        for tup, pos in zip(perm_tup, perm.pos):
+            perm_res[np.array(pos)] = np.array(tup)
+        yield perm_res
+        
+def permute_distance(perm1: PermDict, perm2: PermDict
+                    ) -> int:
+    """
+    This function computes the distance between the specified permutations.
+    Each permutation of size n is represented as a list of tuples, where each
+    tuple represents positions where the bases/values are identical in the
+    underlying haplotype.
+    
+    Parameters
+    ----------
+    perm1, perm2: PermDict
+        PermDict objects between which to compute distance
+    
+    Returns
+    -------
+    int: Vector distance between closest permutations possible from inputs
+    
+    """
+    if perm1.n != perm2.n:
+        raise ValueError('Permutations are of different sizes.')
+        
+    res = np.inf
+    for p1, p2 in product(gen_perm(perm1), gen_perm(perm2)):
+        dis = np.sum(p1 != p2)
+        if dis < res:
+            res = dis
+    return res
+
+def compute_ver(recovered_haplo: NDArray[(Any, ), int],
+                true_haplo: NDArray[(Any,), int]) -> float:
+    """
+    Function to compute vector error rate betweeen the recovered and true haplotypes.
+    
+    Parameters
+    ----------
+    recovered_haplo:
+        k x n matrix of recovered haplotypes
+    true_haplo:
+        True haplotypes (ground truth)
+    
+    Returns
+    -------
+        float: Vector error rate for the polyploid case, switch error rate for diploids
+    """
+    
+    if np.shape(recovered_haplo) != np.shape(true_haplo):
+        raise ValueError("Input arguments should have the same shape.")
+    
+    n_hap, n_SNP = np.shape(true_haplo)
+    if n_SNP <= 1:
+        raise ValueError('Haplotypes must have more than one SNP to compute vector error.')
+    
+    PermDict_list = []
+    vec_err = 0  # Number of vector errors
+
+    for j in range(n_SNP):
+        thap = true_haplo[:, j]
+        rhap = recovered_haplo[:, j]
+        perm_poss = permutations(range(n_hap))  # Possible permutations
+        dis_min = np.inf
+        for p_i in perm_poss:  # Finding best permutation to match thap & rhap
+            dis = np.sum(rhap != thap[np.array(p_i)])
+            if dis == 0:  # Perfect match
+                perm_best = np.array(p_i)
+                break
+            elif dis < dis_min:  # Improved match
+                dis_min = dis
+                perm_best = np.array(p_i)
+        
+        unique_vals, inverse_idx = np.unique(rhap, return_inverse=True)
+        pos_idx = [list(np.nonzero(inverse_idx == i)[0])
+                   for i in range(len(unique_vals))]
+        perm_tups = [list(perm_best[np.nonzero(inverse_idx == i)])
+                     for i in range(len(unique_vals))]       
+#         print(perm_best, perm_tups, pos_idx)
+        PermDict_list.append(PermDict(perm_tups, pos_idx, n_hap))
+        
+        if j > 0:  # Computing vector error using best possible matches
+            err = permute_distance(PermDict_list[-2], PermDict_list[-1])
+            vec_err = vec_err + err
+    
+    res = vec_err/(n_hap*(n_SNP - 1))
+    if n_hap == 2:  # Compute switching error in case of two haplotypes
+        res = res/2
+    
+    return res
