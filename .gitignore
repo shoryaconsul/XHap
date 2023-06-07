@@ -3,13 +3,9 @@ corr_xformer
 read_AE
 *.npz
 *.log
+*.pyc
 
 .ipynb_checkpoints
-
-Ranbow.zip
-ranbow_*
-
-SDHap
 
 Transformers_v*.ipynb
 File Parsing.ipynb
@@ -26,6 +22,7 @@ generate_data/hap*
 generate_data/cov*
 generate_data/pbsim_test
 generate_data/cpp_debug
+generate_data/del*
 
 generate_data/lactococcus_phage.fa.amb
 generate_data/lactococcus_phage.fa.ann
@@ -33,6 +30,11 @@ generate_data/lactococcus_phage.fa.bwt
 generate_data/lactococcus_phage.fa.fai
 generate_data/lactococcus_phage.fa.pac
 generate_data/lactococcus_phage.fa.sa
+
+generate_data/SRR6173308
+generate_data/Solanum_tuberosum.chromosome.5.fa
+generate_data/Solanum_tuberosum.SolTub_3.0.dna.chromosome.5.fa
+generate_data/solanum_tuberosum_long.fa
 
 !generate_data/art_bin_ChocolateCherryCake/
 generate_data/art_bin_ChocolateCherryCake/*
@@ -52,3 +54,17 @@ generate_data/ExtractMatrix_longread_v*
 
 *.ipynb
 !Transformers_Kernel_Kmeans-v4.ipynb
+
+test*
+generate_data/test*
+generate_data/tmp*
+
+Ranbow.zip
+ranbow_*
+*.list
+*.fa.*
+SDHap
+hapcompass*
+
+generate_data/gen_benchmark_data.sh
+generate_data/run_caec_haplo.sh
