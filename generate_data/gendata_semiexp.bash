@@ -10,16 +10,27 @@ HAPCUT="./HapCUT2"  # Folder containing HapCUT2 and htslib source files
 EXTRACTHAIRS="./HapCUT2/build/extractHAIRS"  # Path to extractHAIRs executable from HapCUT2
 VERBOSE=false
 
-while getopts f:o:n:v FLAG
+INS=0
+DEL=0
+while getopts f:o:n:c:i:d:v FLAG
 do
   case "${FLAG}" in
     f) REF=${OPTARG};;  # Path to reference genome
     o) OUTHEAD=${OPTARG};;  # Base name of generated haplotype files
     n) HAPNUM=${OPTARG};;  # Number of haplotypes to generate
+    c) COV=${OPTARG};;  # Coverage per haplotype
+    i) INS=${OPTARG};;  # Length of insertion
+    d) DEL=${OPTARG};;  # Length of deletion
     v) VERBOSE=true;;
-    *) echo "Invalid command line option: -$FLAG" ;;
+    *) echo "$(basename $0): Invalid command line option: -$FLAG" ;;
   esac
 done
+
+
+if [ $INS -gt 0 ] && [ $DEL -gt 0 ]; then
+  echo "Either only insertion or only deletion can be added."
+  exit 1
+fi
 
 : << 'COMMENT'
 REF=$2  # Path to reference genome
@@ -45,7 +56,7 @@ fi
 if [[ $MODEL == "poisson" ]];then
   python2 $HAPGEN -f $REF -o $OUTHEAD --model $MODEL -s "[0.04,0.01,0.01]" -m "{'A':'GCT','G':'ACT','C':'TAG','T':'ACG'}" -p $HAPNUM
 elif [[ $MODEL == "lognormal" ]];then
-  python2 $HAPGEN -f $REF -o $OUTHEAD --model $MODEL -s "[4.63,0,0]" --sdlog "[0.693,0,0]" -m "{'A':'GCT','G':'ACT','C':'TAG','T':'ACG'}" -p $HAPNUM
+  python2 $HAPGEN -f $REF -o $OUTHEAD --model $MODEL -s "[3.03,0,0]" --sdlog "[1.293,0,0]" -m "{'A':'GCT','G':'ACT','C':'TAG','T':'ACG'}" -p $HAPNUM
 else
   echo "Invalid model specified"
   exit 1
@@ -65,13 +76,19 @@ rm "$HAPFOLDER/"*".fai"  # Remove extraneous faidx files
 
 cat "$HAPFOLDER/"*".fa" > "$HAPFOLDER/combined.fa"  # Combined FASTA files
 
+# Add indels to one of the genomes
+if [ $INS -gt 0 ]; then
+  python3 add_indel.py -f "$HAPFOLDER/combined.fa" -i $INS -t "$HAPFOLDER/indel.txt"
+elif [ $DEL -gt 0 ]; then
+  python3 add_indel.py -f "$HAPFOLDER/combined.fa" -d $DEL -t "$HAPFOLDER/indel.txt"
+fi
 
 # Generate paired-end reads reads using ART
 # -l [read length] -f [coverage] -m [mean insert length] -s [sd of insert length]
 if [[ $VERBOSE = true ]];then
-  $ART -p -na -i "$HAPFOLDER/combined.fa" -l 150 --seqSys HS25 -f 5 -m 550 -s 5 -o "$HAPFOLDER/hap"
+  $ART -p -na -i "$HAPFOLDER/combined.fa" -l 250 --seqSys MS -f $COV -m 550 -s 10 -o "$HAPFOLDER/hap"
 else   
-  $ART -p -na -q -i "$HAPFOLDER/combined.fa" -l 150 --seqSys HS25 -f 5 -m 550 -s 5 -o "$HAPFOLDER/hap"
+  $ART -p -na -q -i "$HAPFOLDER/combined.fa" -l 250 --seqSys MS -f $COV -m 550 -s 10 -o "$HAPFOLDER/hap"
 fi
 rm "$HAPFOLDER/"*".aln"
 echo "Generated reads"
@@ -83,24 +100,30 @@ $BWA mem -t 5 -R $RG_HEADER $REF "$HAPFOLDER/hap"*".fq" > "$HAPFOLDER/$OUTHEAD.s
 samtools sort "$HAPFOLDER/$OUTHEAD.sam" -o "$HAPFOLDER/$OUTHEAD""_sorted.bam"
 
 # Generate read-SNP matrix
-THRESH=0.2
+if [ $HAPNUM -gt 3 ]; then
+  THRESH=0.1
+else
+  THRESH=0.2
+fi
+
 HAPLEN=$(awk '{print length }' $REF | tail -1)  # Find length of reference genome
 $EXTRACT_MATRIX -f $REF -s "$HAPFOLDER/$OUTHEAD.sam" -t $THRESH -z "$HAPFOLDER/$OUTHEAD" -k $HAPNUM \
 -b 0 -e $HAPLEN -q 0 -l 100 -i 560 
 
 # CAECSeq
-python $CAECSEQ "$HAPFOLDER/$OUTHEAD" -k $HAPNUM -n 3
+# python $CAECSEQ "$HAPFOLDER/$OUTHEAD" -k $HAPNUM -n 5
 
+: << 'COMMENT'
 # Variant calling
+
 $FREEBAYES -f $REF -p $HAPNUM "$HAPFOLDER/$OUTHEAD""_sorted.bam" > "$HAPFOLDER/$OUTHEAD""_variants.vcf"
 
-# Generate SNP fragment matrtix for SDHap/HapCUT
+# Generate SNP fragment matrtix for SDHap/HapCUT:
 cd $HAPCUT
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(pwd)/htslib"  # Add to path
 cd ..
 $EXTRACTHAIRS --VCF "$HAPFOLDER/$OUTHEAD""_variants.vcf" --bam "$HAPFOLDER/$OUTHEAD""_sorted.bam" --maxIS 3000 --out "$HAPFOLDER/$OUTHEAD""_fragment_file.txt"
 
-: << 'COMMENT'
 
 B=$(echo | awk -v c=$C -v d=$D '{print c / d}')
 

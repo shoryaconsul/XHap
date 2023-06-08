@@ -72,7 +72,7 @@ class ReadAE(nn.Module):
         	latent_dim = int(np.ceil(nSNP/4))  # Size of embedding
 
         self.encoder = nn.Sequential(
-            nn.Conv2d(1, 32, (4,5), (4,1), (1, 2)),
+            nn.Conv2d(1, 32, (4,5), (4,1), (0, 2)),  # Padding changed from (1,2) to (0,2)
             nn.PReLU(),
             nn.Conv2d(32, 64, (1,5), (1,1), 'same'),
             nn.PReLU(),

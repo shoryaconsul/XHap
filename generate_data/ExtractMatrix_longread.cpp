@@ -64,6 +64,16 @@ vector<string> tokenize(const string& str,const string& delimiters)
 	return tokens;
 }
 
+int num_chimeric_aln(const vector<string>& tokens){
+	int res = 1;
+	for(string tok : tokens){
+		if(tok.rfind("SA:Z:", 0) == 0){  // if token starts with "SA:Z:"
+			res = count(tok.begin(), tok.end(), ';') + 1;
+		}
+	}
+	return res;
+}
+
 void parse_sam_line(const vector<string>& tokens, vector<int>& seq_b, double& a_score, char gap_quality, int& indels, int& al_start)
 {  
 	seq_b.clear();
@@ -142,24 +152,75 @@ void parse_sam_line(const vector<string>& tokens, vector<int>& seq_b, double& a_
 	}  
 }
 
+void parse_sam_splitread(vector<vector<string>>& tokens_vec, vector<int>& seq_b, double& a_score, char gap_quality, int& indels, int& al_start, int& qual)
+{
+	seq_b.clear();
+	indels = 0;
+
+	if(tokens_vec.size() == 1)
+	{
+		parse_sam_line(tokens_vec[0], seq_b, a_score,  gap_quality, indels, al_start);
+		qual = atoi(tokens_vec[0][4].c_str());
+		return; 
+	}
+
+
+	std::sort(tokens_vec.begin(), tokens_vec.end(), [](const vector<string>& t1, const vector<string>& t2) {
+		return atoi(t1[3].c_str()) < atoi(t2[3].c_str());
+		}
+	);  // sort split alignments by starting aligned position
+
+	// std::sort(tokens_vec.begin(), tokens_vec.end(), comp_tokens);
+	vector<string> seq_b_combined;
+
+	vector<int> seq_b_tmp;
+	double a_score_tmp;
+	int al_start_tmp;
+	int qual_tmp;
+	int Ngap = 0;
+
+	parse_sam_line(tokens_vec[0], seq_b, a_score,  gap_quality, indels, al_start);
+
+	for(int i=1; i < tokens_vec.size(); i++){ // Skip first element
+		vector<string> tok = tokens_vec[i];
+		parse_sam_line(tok, seq_b_tmp,  a_score_tmp,  gap_quality, indels, al_start_tmp);
+		a_score = a_score + a_score_tmp;
+		qual_tmp = atoi(tok[4].c_str());
+		if(qual_tmp < qual) {qual = qual_tmp;}  // Store lowest mapping quality
+
+		if(al_start_tmp - (al_start +   (int)seq_b.size())>0)  // Gap between split alignments
+		{
+			Ngap = al_start_tmp - (al_start + (int)seq_b.size());
+			vector<int> Ns(Ngap,0);
+			seq_b.insert(seq_b.end(), Ns.begin(), Ns.end());
+	      	seq_b.insert(seq_b.end(), seq_b_tmp.begin(), seq_b_tmp.end());
+		}
+		else{  // No gap between alignments
+			seq_b.erase(seq_b.begin() + (al_start_tmp - al_start), seq_b.end());
+			seq_b.insert(seq_b.end(), seq_b_tmp.begin(), seq_b_tmp.end());
+		}
+	}
+}
+
 int parseSAMpaired( string al, double min_qual, int min_length, int max_insertln, char gap_quality, double& mean_length, vector<vector<int> >& Read_matrix, int reconstruction_start, int reconstruction_end, int& total_count, int gene_length, string zonename, vector<vector<int> >& ReadSeq, vector<int>& StartSeq, vector<int>& EndSeq)
 {
 	string line;
-  	vector<string> tokens, tokens_1, tokens_2;
+  	vector<string> tokens;
+	vector<vector<string>> tokens_vec;
 	int pair_counter = 0, seq_counter =0, singleton_counter = 0;
-  	vector<int> seq_b, seq_b_pairs;
-  	double a_score,a_score_pairs;
-	int indels, indels_pairs;
-  	int al_start, al_start_pairs;
-    	string sRC_1, sRC_2, pairs_1, pairs_2;
-  	bool part_1 = false, is_pair = false;
-  	string id, id_1;
+  	vector<int> seq_b;
+  	double a_score;
+	int indels, qual;
+  	int al_start;
+  	bool is_read = false;
+	int rcount = 0;
+  	string id;
   	int RC;
 	vector<vector<int> > lowQSseq;
   
 	int filtered_counter1 = 0, filtered_counter2 = 0;
 	int mapped_counter = 0, unmapped_counter = 0; 
-int filtered_cond2 = 0;
+	int filtered_cond2 = 0;
 
 	ifstream inf6(al.c_str(),ios::in);
   	while( getline(inf6,line,'\n') )
@@ -173,189 +234,109 @@ int filtered_cond2 = 0;
 			return 1;
 		}
 		id =  tokens[0];
-	    	total_count++;
+	    total_count++;
 				
-	    	RC =  atoi( tokens[1].c_str());
-	    	stringstream strs;
-	    	string sRC = binary(RC,  strs);
+	    RC =  atoi( tokens[1].c_str());
+	    stringstream strs;
+	    string sRC = binary(RC,  strs);
 		int sz = sRC.size();
-		if(sz > 8) // bit9-12 should be 0
+		if(sz > 8 && RC < 2048) // bit9-12 should be 0 if not chimeric alignment
 	      	{ filtered_counter1++;	continue;}
-	        if(sRC[sz-3] == '1' ||  sRC[sz-4]  == '1'  ) // bit 3-4 should be 0
+	    if(sRC[sz-3] == '1' ||  sRC[sz-4]  == '1'  ) // bit 3-4 should be 0
 	      	{ filtered_counter2++;	continue;}
-	    	if(part_1 && id == id_1 && sz == 8 && sRC[0] == '1')
-		{
-	      		is_pair = true;
-	      		part_1 = false;
-	      		pairs_2 = line;
-	      		sRC_2 = sRC;
-	      		tokens_2 = tokens;
-	      		pair_counter++;
-	   	}
-	    	else
-		{
-	     		part_1 = true;
-	      		is_pair = true;
-	      		pairs_1 = line;
-	      		sRC_1 = sRC;
-	      		id_1 = id;
-	      		tokens_1 = tokens;
-	      		pairs_2 = line;
-	      		sRC_2 = sRC;
-	      		tokens_2 = tokens;
-	      		singleton_counter++;
-	   	}
 		
-	    	if(is_pair)
-		{	
-	      		parse_sam_line(tokens_1, seq_b,  a_score,  gap_quality, indels, al_start );
-	       		parse_sam_line(tokens_2, seq_b_pairs,  a_score_pairs,  gap_quality, indels_pairs, al_start_pairs );
-		
-	      		int qual = atoi(tokens_1[4].c_str());
-	      		int qual_pairs = atoi(tokens_2[4].c_str());
+		if(rcount == 0){  // primary alignment of read
+			is_read = false;
+			tokens_vec.clear();
+			rcount = num_chimeric_aln(tokens);
+			singleton_counter++;
+		}
+		else{
+			rcount--;
+		}
+		tokens_vec.push_back(tokens);
 
-	      		if(// seq_b.size() >= min_length && seq_b_pairs.size() >= min_length 
-//				&& seq_b.size() !=0 && seq_b_pairs.size() !=0 && 
-				qual >= min_qual && qual_pairs >= min_qual)
-			{	 
+		if(rcount == 1){  // read all alignments for this read
+			is_read = true;
+			rcount = 0;
+		}
+		
+	    if(is_read){
+			parse_sam_splitread(tokens_vec, seq_b,  a_score,  gap_quality, indels, al_start, qual);
+
+	      	if(qual >= min_qual){	 
 				mapped_counter++;
 				int StartPos = al_start;
 				vector<int> SEQ_combined = seq_b;
 				bool is_gap = false;
 				int Nlength = 0;
 	
-				if(al_start_pairs < al_start)
-				{
-		  			StartPos = al_start_pairs;	  
-		  			is_gap = false;
-		  			if(al_start-(al_start_pairs +   (int)seq_b_pairs.size())>0)
-		    				is_gap = true;
-	  				if(is_gap)
-					{
-						Nlength = al_start-(al_start_pairs +   (int)seq_b_pairs.size());
-	    					vector<int> Ns(Nlength,0);
-						seq_b_pairs.insert(seq_b_pairs.end(), Ns.begin(), Ns.end());
-						seq_b_pairs.insert(seq_b_pairs.end(), seq_b.begin(), seq_b.end());
-						SEQ_combined = seq_b_pairs; 
-	  				}
-					else
-					{
-						vector<int> first_part (seq_b_pairs.begin(),seq_b_pairs.begin() + (al_start - al_start_pairs));
-						first_part.insert(first_part.end(), seq_b.begin(), seq_b.end());
-						SEQ_combined = first_part;
-	  				}
-				}
-				else
-				{
-					if(al_start_pairs > al_start)
-					{
-				    		is_gap = false;
-				    		if(al_start_pairs - (al_start + (int)seq_b.size()) >0)
-				      			is_gap = true;
-	    					if(is_gap)
-						{
-	      						Nlength =al_start_pairs-(al_start + (int)seq_b.size());
-	      						vector<int> Ns(Nlength,0);
-	      						seq_b.insert(seq_b.end(), Ns.begin(), Ns.end());
-	      						seq_b.insert(seq_b.end(), seq_b_pairs.begin(), seq_b_pairs.end());
-	      						SEQ_combined = seq_b;
-	   		 			}
-						else
-						{
-	      						vector<int> first_part (seq_b.begin(),seq_b.begin() + (al_start_pairs - al_start));
-	      						first_part.insert(first_part.end(), seq_b_pairs.begin(), seq_b_pairs.end());
-	      						SEQ_combined = first_part;
-	   					 }
-	  				}
-				}
-				if(!is_gap || Nlength < max_insertln)  
-				{filtered_cond2++;
-					int EndPos = StartPos + SEQ_combined.size()-1; //range = reconstruction_end-reconstruction_start+1;
-					if ( StartPos <= reconstruction_end && EndPos >= reconstruction_start)
-					{
-						vector<int> SEQ_range;
-						if (StartPos < reconstruction_start)
-						{
-							if (EndPos <= reconstruction_end)
-							{
-								vector<int> SEQ_inrange(SEQ_combined.begin()+(reconstruction_start-StartPos),SEQ_combined.end());
-								vector<int> Ns(gene_length-SEQ_inrange.size(),0);
-								SEQ_inrange.insert(SEQ_inrange.end(),Ns.begin(),Ns.end());
-								SEQ_range = SEQ_inrange;
-							}
-							else
-							{
-								vector<int> SEQ_inrange(SEQ_combined.begin()+(reconstruction_start-StartPos),SEQ_combined.begin()+(reconstruction_end-StartPos+1));
-								SEQ_range = SEQ_inrange;
-							}
+				filtered_cond2++;
+				int EndPos = StartPos + SEQ_combined.size()-1; //range = reconstruction_end-reconstruction_start+1;
+				if ( StartPos <= reconstruction_end && EndPos >= reconstruction_start){
+					vector<int> SEQ_range;
+					if (StartPos < reconstruction_start){
+						if (EndPos <= reconstruction_end){
+							vector<int> SEQ_inrange(SEQ_combined.begin()+(reconstruction_start-StartPos),SEQ_combined.end());
+							vector<int> Ns(gene_length-SEQ_inrange.size(),0);
+							SEQ_inrange.insert(SEQ_inrange.end(),Ns.begin(),Ns.end());
+							SEQ_range = SEQ_inrange;
 						}
-						else
-						{
-							if (EndPos <= reconstruction_end)
-							{
-								vector<int> SEQ_inrange = SEQ_combined;
-								vector<int> Ns1(StartPos-reconstruction_start,0);
-								SEQ_inrange.insert(SEQ_inrange.begin(),Ns1.begin(),Ns1.end());
-								vector<int> Ns2(reconstruction_end-EndPos,0);
-								SEQ_inrange.insert(SEQ_inrange.end(),Ns2.begin(),Ns2.end());	
-								SEQ_range = SEQ_inrange;						
+						else{
+							vector<int> SEQ_inrange(SEQ_combined.begin()+(reconstruction_start-StartPos),SEQ_combined.begin()+(reconstruction_end-StartPos+1));
+							SEQ_range = SEQ_inrange;
 							}
-							else
-							{
-								vector<int> SEQ_inrange(SEQ_combined.begin(),SEQ_combined.begin()+(reconstruction_end-StartPos+1));
-								vector<int> Ns(StartPos-reconstruction_start,0);
-								SEQ_inrange.insert(SEQ_inrange.begin(),Ns.begin(),Ns.end());
-								SEQ_range = SEQ_inrange;
-							}
+					}
+					else{
+						if (EndPos <= reconstruction_end){
+							vector<int> SEQ_inrange = SEQ_combined;
+							vector<int> Ns1(StartPos-reconstruction_start,0);
+							SEQ_inrange.insert(SEQ_inrange.begin(),Ns1.begin(),Ns1.end());
+							vector<int> Ns2(reconstruction_end-EndPos,0);
+							SEQ_inrange.insert(SEQ_inrange.end(),Ns2.begin(),Ns2.end());	
+							SEQ_range = SEQ_inrange;						
 						}
+						else{
+							vector<int> SEQ_inrange(SEQ_combined.begin(),SEQ_combined.begin()+(reconstruction_end-StartPos+1));
+							vector<int> Ns(StartPos-reconstruction_start,0);
+							SEQ_inrange.insert(SEQ_inrange.begin(),Ns.begin(),Ns.end());
+							SEQ_range = SEQ_inrange;
+							}
+					}
 						Read_matrix.push_back(SEQ_range); // nReads by genome_length
 			  			mean_length += SEQ_combined.size();
 						seq_counter++;
 						StartSeq.push_back(StartPos);//vector saving start positions for each paired-end sequence
-                                                EndSeq.push_back(EndPos); //vector saving end positions for each paired-end sequence
-                                                ReadSeq.push_back(SEQ_combined);//saving filtered paired-end sequences
-					}				  
-				}
-	      		}
+                        EndSeq.push_back(EndPos); //vector saving end positions for each paired-end sequence
+                        ReadSeq.push_back(SEQ_combined);//saving filtered paired-end sequences
+				}				  
+				
+	      	}
 			else // unmapped or low qual/short seqlen etc
 			{
 				unmapped_counter++;
 				if (qual < min_qual) // || seq_b.size() < min_length)
-                                {
-                                	vector<int> tag(8,0);
-                                        tag[0] = pair_counter;
-                                        tag[2] = qual;
+				{
+					vector<int> tag(8,0);
+					tag[0] = pair_counter;
+					tag[2] = qual;
 					tag[3] = al_start;
 					tag[4] = seq_b.size();
-					tag[5] = qual_pairs;
-					tag[6] = al_start_pairs;
-					tag[7] = seq_b_pairs.size();
-                                        lowQSseq.push_back(tag);
-                                }
-                                if (qual_pairs < min_qual) // || seq_b_pairs.size() < min_length)
-                                {
-                                        vector<int> tag(8,1);
-                                        tag[0] = pair_counter;
-                                        tag[2] = qual;
-					tag[3] = al_start;
-                                        tag[4] = seq_b.size();
-                                        tag[5] = qual_pairs;
-                                        tag[6] = al_start_pairs;
-                                        tag[7] = seq_b_pairs.size();
-                                        lowQSseq.push_back(tag);
-                                }
+					lowQSseq.push_back(tag);
+				}
 			}
 	   	 }
 	}
 	std::ofstream writefile1;
-        std::ofstream writefile2;
-        std::ofstream writefile3;
-        std::ofstream writefile4;
+    std::ofstream writefile2;
+    std::ofstream writefile3;
+    std::ofstream writefile4;
 	std::string name = zonename;
 	writefile1.open(name+"_lowQSseq.txt");
 	writefile2.open(name+"_StartSeq.txt");
-        writefile3.open(name+"_EndSeq.txt");
-        writefile4.open(name+"_ReadSeq.txt");
+    writefile3.open(name+"_EndSeq.txt");
+    writefile4.open(name+"_ReadSeq.txt");
+	
 	for (int i = 0; i < lowQSseq.size(); i++)
 	{
 		writefile1 << lowQSseq[i][0] << " " << lowQSseq[i][1] << " " << lowQSseq[i][2] << " " << lowQSseq[i][3] << " " << lowQSseq[i][4] << " " << lowQSseq[i][5] << " " << lowQSseq[i][6] << " " << lowQSseq[i][7]  <<endl;
@@ -594,7 +575,7 @@ int main(int argc, char* argv[]) {
 	        if (Read_matrix[i].size() != gene_length)
 			cout << "error!!!"<<endl;
 	}
-	cout <<  endl << "After parsing " << total_count << " reads in file " <<FASTAreads[0]<< ", there are "<<nReads<< " paired_end reads(mean lengths "<< mean_length/Read_matrix.size() << ") covering regions "<< reconstruction_start << "-" << reconstruction_end <<"."<< endl;
+	cout <<  endl << "After parsing " << total_count << " reads in file " <<FASTAreads[0]<< ", there are "<<nReads<< "reads(mean lengths "<< mean_length/Read_matrix.size() << ") covering regions "<< reconstruction_start << "-" << reconstruction_end <<"."<< endl;
 	
 	end = clock();	
 	cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;

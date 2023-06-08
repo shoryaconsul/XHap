@@ -2,6 +2,7 @@ import numpy as np
 from numpy import random as rn
 from nptyping import NDArray
 from typing import Any
+import time
 
 
 class KernelKMeans():
@@ -13,23 +14,29 @@ class KernelKMeans():
         self.verbose = verbose  # Set to True if debugging output is required
 
     def compute_dist(self, kernel_matrix: NDArray[(Any, Any), float]):
-        dist_matrix = np.zeros((kernel_matrix.shape[0], self.n_clusters))
+        m = kernel_matrix.shape[0]
+        dist_matrix = np.zeros((m, self.n_clusters))
         self.within_dist = np.zeros(self.n_clusters)
 
-        for j in range(self.n_clusters):
-            mask = (self.labels_ == j)
-            # print(j, np.sum(self.labels_==j))
-            if np.sum(mask) == 0:
-                # raise ValueError("Empty cluster. Reinitializing cluster labels")
-                dist_matrix[:, j] = ((np.argmax(dist_matrix)
-                                     - np.argmin(dist_matrix))*rn.rand(kernel_matrix.shape[0])
-                                     + np.argmin(dist_matrix))
-            else:
-                K_mask = kernel_matrix[mask][:, mask]
-                dist_j = np.sum(K_mask) / np.sum(mask)**2
-                self.within_dist[j] = dist_j
-                dist_matrix[:, j] = (dist_matrix[:, j] + dist_j
-                                     - 2*np.sum(kernel_matrix[:, mask], axis=1)/np.sum(mask))
+        M = np.zeros_like(dist_matrix)  # One hot cluster encoding
+        M[np.arange(m), self.labels_] = 1
+        Msum = M.T @ M
+        zero_idx = (np.diag(Msum) == 0)  # Aboiding division by zero
+        if np.any(zero_idx):
+            Msum[zero_idx, zero_idx] = 1
+
+        # Vectorization to compute distance between points and cluster means
+        Msum_inv = np.diag(1./np.diag(Msum))
+        K = kernel_matrix
+        wdist = np.diag(M.T @ K @ M)*np.diag(Msum_inv)**2
+        self.within_dist = wdist
+
+        dist_matrix = np.outer(np.ones(m), wdist) - 2*K @ M @ Msum_inv
+        dmin = np.amin(dist_matrix[:, ~zero_idx])
+        dmax = np.amax(dist_matrix[:, ~zero_idx])
+        dist_matrix[:, zero_idx] = dmin + (dmax - dmin
+                                           )*rn.rand(m, np.sum(zero_idx))
+
         return dist_matrix
 
     def fit(self, kernel_matrix: NDArray[(Any, Any), float]):
@@ -37,12 +44,12 @@ class KernelKMeans():
         self.labels_ = rn.randint(self.n_clusters, size=n_data)  # Random initialization
 
         for it in range(self.max_iter):
+
             dist_matrix = self.compute_dist(kernel_matrix)
             labels_prev = np.copy(self.labels_)
             self.labels_ = np.argmin(dist_matrix, axis=1)
 
             n_labels_changed = np.count_nonzero(self.labels_ - labels_prev)
-            # print(it, n_labels_changed/n_data)
             if n_labels_changed/n_data < self.tol:
                 if self.verbose:
                     print("Converged at iteration %d with $.3f labels"
@@ -54,21 +61,26 @@ class KernelKMeans():
 if __name__ == '__main__':
     from sklearn.datasets import make_blobs
     from matplotlib import pyplot as plt
-
-    X, y = make_blobs(n_samples=1000, centers=5, random_state=0)
-    km = KernelKMeans(n_clusters=5, max_iter=100, tol=1e-3)
-    kernel_matrix = X @ X.T
+    n_cl = 2
+    
+    X, y = make_blobs(n_samples=1000, centers=n_cl, random_state=0)
+    km = KernelKMeans(n_clusters=5, max_iter=1000, tol=1e-3)
+    Xn = np.diag(1./np.linalg.norm(X, axis=1)) @ X
+    kernel_matrix = Xn @ Xn.T
     # kernel_matrix = np.zeros((X.shape[0], X.shape[0]))
     # for i in range(X.shape[0]):
     #     for j in range(X.shape[0]):
     #         kernel_matrix[i, j] = np.exp(-1*np.linalg.norm(X[i]-X[j])**2)
     
+    t0 = time.time()
     km.fit(kernel_matrix)
+    t1 = time.time()
+    print('Time taken for clustering = %.3fs' %(t1-t0))
     
     plt.figure()
-    for i in range(5):
+    for i in range(n_cl):
         plt.scatter(X[km.labels_==i, 0], X[km.labels_==i, 1])
 
     plt.figure()
-    for i in range(5):
+    for i in range(n_cl):
         plt.scatter(X[y==i, 0], X[y==i, 1])
