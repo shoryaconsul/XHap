@@ -1,5 +1,4 @@
-# XHap 
-## Haplotype assembly sing long-distance read correlations learned by transformers
+# XHap: Haplotype assembly sing long-distance read correlations learned by transformers
 -----------
 
 ## About
