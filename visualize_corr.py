@@ -146,29 +146,33 @@ fig.colorbar(im1, cax=cbar_ax)
 plt.savefig('test_plots_1.jpg', bbox_inches='tight')
 # plt.savefig('generate_data/' + outhead + '/corr_plots.jpg', bbox_inches='tight')
 
-r_nz, c_nz = np.nonzero(np.abs(W_best_sort - W_sup_sort)*(W_sup_sort == 0) > 0.1)
+corr_thresh = 0.1
+r_nz, c_nz = np.nonzero(np.abs(W_best_sort - W_sup_sort)*(W_sup_sort == 0)
+                        > corr_thresh)
 nz_sort = np.argsort(np.abs(c_nz - r_nz))[::-1]
 print(np.sort(np.abs(c_nz - r_nz))[::-1])
 print(W_best_sort[r_nz[nz_sort], c_nz[nz_sort]])
-print(len(r_nz), len(r_nz)/np.sum(W_sup_sort == 0))
+print("Number of discovered correlations %d, Discovered fraction of correlations %.3f" 
+      %(len(r_nz), len(r_nz)/np.sum(W_sup_sort == 0))
+      )
 # idx_nz = np.argsort(np.abs(c_nz - r_nz))[::-1][:100]
 # print(list(zip(r_nz[idx_nz], c_nz[idx_nz])))
 
-print('CHECKING READS')
-with open(pos_file, "r") as f:
-		pos_str = f.readline().split()
-		pos = np.array([int(ps) - 1 for ps in pos_str])
+# print('CHECKING READS')
+# with open(pos_file, "r") as f:
+# 		pos_str = f.readline().split()
+# 		pos = np.array([int(ps) - 1 for ps in pos_str])
 
-read_gap_list = []
-read_dist_list = []
-for r, c in zip(r_nz, c_nz):
-    r1_snp = np.nonzero(SNV_matrix[idx][r])[0]
-    r2_snp = np.nonzero(SNV_matrix[idx][c])[0]
-    if r1_snp[0] > r2_snp[0]:
-        r1_snp, r2_snp = r2_snp, r1_snp
-    read_gap_list.append(pos[r2_snp[0]] - pos[r1_snp[-1]])
-    read_dist_list.append(pos[r2_snp[0]] - pos[r1_snp[0]])
-print('MAX READ GAP:')
-print(np.amax(read_gap_list))
-print('MAX READ DISTANCE:')
-print(np.amax(read_dist_list))
+# read_gap_list = []
+# read_dist_list = []
+# for r, c in zip(r_nz, c_nz):
+#     r1_snp = np.nonzero(SNV_matrix[idx][r])[0]
+#     r2_snp = np.nonzero(SNV_matrix[idx][c])[0]
+#     if r1_snp[0] > r2_snp[0]:
+#         r1_snp, r2_snp = r2_snp, r1_snp
+#     read_gap_list.append(pos[r2_snp[0]] - pos[r1_snp[-1]])
+#     read_dist_list.append(pos[r2_snp[0]] - pos[r1_snp[0]])
+# print('MAX READ GAP:')
+# print(np.amax(read_gap_list))
+# print('MAX READ DISTANCE:')
+# print(np.amax(read_dist_list))

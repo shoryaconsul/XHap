@@ -348,7 +348,7 @@ def train_xhap(outhead: str, d_model: int = 128, num_hap: int = 2, num_epoch: in
                                       hap_origin[batch_idx],
                                       W_sup_dev[batch_idx][:,batch_idx],
                                       W_mask_dev[batch_idx][:,batch_idx],
-                                      lambda_reg=1e6) # + 0.1*AE_loss
+                                      lambda_reg=1e2) # + 0.1*AE_loss
             xform_loss.backward()
             xform_optimizer.step()
             xform_train_loss += xform_loss.item()

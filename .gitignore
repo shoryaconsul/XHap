@@ -23,7 +23,9 @@ generate_data/cov*
 generate_data/pbsim_test
 generate_data/cpp_debug
 generate_data/del*
+generate_data/proc_frag_sdhap.py
 
+generate_data/lactococcus_phage.fa
 generate_data/lactococcus_phage.fa.amb
 generate_data/lactococcus_phage.fa.ann
 generate_data/lactococcus_phage.fa.bwt
