@@ -1,5 +1,4 @@
 # XHap: Haplotype assembly sing long-distance read correlations learned by transformers
------------
 
 ## About
 XHap is a framework based on transformers (from natural language processing) for diploid and polyploid haplotype assembly. The framework is capable of haplotype reconstruction from either short reads (e.g. Illumina, Roche) or long reads (e.g. PacBio, ONT) or a combination thereof.
@@ -13,6 +12,7 @@ The current implementation of XHap uses Python3, PyTorch and PyTorch ROCm (for A
 - Scipy
 - C++
 - Samtools
+- MAFFT
 
 Where possible, additional dependencies have been included in the GitHub repository.
 
