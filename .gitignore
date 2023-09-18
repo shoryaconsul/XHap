@@ -70,3 +70,7 @@ hapcompass*
 
 generate_data/gen_benchmark_data.sh
 generate_data/run_caec_haplo.sh
+
+generate_data/NA12878/*.bam
+generate_data/NA12878/*.bai
+generate_data/NA12878/*.vcf
