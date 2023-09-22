@@ -218,8 +218,8 @@ void parse_sam_splitread(vector<vector<string>>& tokens_vec, vector<int>& seq_b,
 }
 
 
-int parseSAM( string al, double min_qual, char gap_quality, double& mean_length, vector<vector<int>>& SNV_matrix, vector<int> SNV_pos,
-		int reconstruction_start, int reconstruction_end, int& total_count, int gene_length, string zonename, int nFrag)
+int parseSAM( string al, double min_qual, char gap_quality, double& mean_length, vector<vector<pair<int, int>>>& SNV_matrix, vector<int> SNV_pos,
+		int reconstruction_start, int reconstruction_end, int& total_count, int& read_count, int gene_length, string zonename, int nFrag)
 {
 	string line;
   	vector<string> tokens;
@@ -252,12 +252,14 @@ int parseSAM( string al, double min_qual, char gap_quality, double& mean_length,
 	ifstream inf6(al.c_str(),ios::in);
 	int read_i = 0;  // read count
 
+
 	progressbar bar(nFrag);
 	bar.set_todo_char(" ");
-    bar.set_done_char("█");
+	bar.set_done_char("█");
+
   	while( getline(inf6,line,'\n') )
 	{	
-		bar.update();
+		if(nFrag > 0) bar.update();
     	if(line[0] == '@')
       		continue;
 	    
@@ -299,7 +301,7 @@ int parseSAM( string al, double min_qual, char gap_quality, double& mean_length,
 			parse_sam_splitread(tokens_vec, seq_b,  a_score,  gap_quality, indels, al_start, qual);
 			read_i++;
 			// if(read_i % 10000 == 0)
-			// 	cout << "Read " << read_i << endl;
+				// cout << "Read" << " " <<  read_i << " " << SNV_matrix.size() << endl;
 
 	      	if(qual >= min_qual){	 
 				mapped_counter++;
@@ -310,35 +312,72 @@ int parseSAM( string al, double min_qual, char gap_quality, double& mean_length,
 	
 				filtered_cond2++;
 				int EndPos = StartPos + SEQ_combined.size()-1; //range = reconstruction_end-reconstruction_start+1;
+				int snv_start_idx = 0, snv_end_idx = 0;
 				if ( StartPos <= reconstruction_end && EndPos >= reconstruction_start){
-					vector<int> SEQ_range;
+					// vector<int> SEQ_range;
 					if (StartPos < reconstruction_start){
 						if (EndPos <= reconstruction_end){
-							vector<int> SEQ_inrange(SEQ_combined.begin()+(reconstruction_start-StartPos),SEQ_combined.end());
-							vector<int> Ns(gene_length-SEQ_inrange.size(),0);
-							SEQ_inrange.insert(SEQ_inrange.end(),Ns.begin(),Ns.end());
-							SEQ_range = SEQ_inrange;
+							// cout << "CASE 1" << endl;
+							// reconstruction_start = SNV_pos[0], so do not need to search
+							// while(SNV_pos[snv_idx] < reconstruction_start) snv_idx++;
+							snv_end_idx = snv_start_idx + 1;
+							while(SNV_pos[snv_end_idx] <= EndPos - reconstruction_start) snv_end_idx++;
+
+							// vector<int> SEQ_inrange(SEQ_combined.begin() + (reconstruction_start-StartPos),SEQ_combined.end());
+							// vector<int> Ns(gene_length-SEQ_inrange.size(),0);
+							// SEQ_inrange.insert(SEQ_inrange.end(),Ns.begin(),Ns.end());
+							// SEQ_range = SEQ_inrange;
 						}
 						else{
-							vector<int> SEQ_inrange(SEQ_combined.begin()+(reconstruction_start-StartPos),SEQ_combined.begin()+(reconstruction_end-StartPos+1));
-							SEQ_range = SEQ_inrange;
+							// cout << "CASE 2" << endl;
+							snv_end_idx = SNV_pos.size();  // reconstruction_end = last SNP position
+
+							// vector<int> SEQ_inrange(SEQ_combined.begin()+(reconstruction_start-StartPos),SEQ_combined.begin()+(reconstruction_end-StartPos+1));
+							// SEQ_range = SEQ_inrange;
 						}
 					}
 					else{
 						if (EndPos <= reconstruction_end){
-							vector<int> SEQ_inrange = SEQ_combined;
-							vector<int> Ns1(StartPos-reconstruction_start,0);
-							SEQ_inrange.insert(SEQ_inrange.begin(),Ns1.begin(),Ns1.end());
-							vector<int> Ns2(reconstruction_end-EndPos,0);
-							SEQ_inrange.insert(SEQ_inrange.end(),Ns2.begin(),Ns2.end());	
-							SEQ_range = SEQ_inrange;						
+							// search for first SNP index
+							// cout << "CASE 3" << endl;
+							while(SNV_pos[snv_start_idx] < StartPos - reconstruction_start) snv_start_idx++;
+							snv_end_idx = snv_start_idx + 1;
+							while(SNV_pos[snv_end_idx] <= EndPos - reconstruction_start) snv_end_idx++;
+
+							// vector<int> SEQ_inrange = SEQ_combined;
+							// vector<int> Ns1(StartPos-reconstruction_start,0);
+							// SEQ_inrange.insert(SEQ_inrange.begin(),Ns1.begin(),Ns1.end());
+							// vector<int> Ns2(reconstruction_end-EndPos,0);
+							// SEQ_inrange.insert(SEQ_inrange.end(),Ns2.begin(),Ns2.end());	
+							// SEQ_range = SEQ_inrange;						
 						}
 						else{
-							vector<int> SEQ_inrange(SEQ_combined.begin(),SEQ_combined.begin()+(reconstruction_end-StartPos+1));
-							vector<int> Ns(StartPos-reconstruction_start,0);
-							SEQ_inrange.insert(SEQ_inrange.begin(),Ns.begin(),Ns.end());
-							SEQ_range = SEQ_inrange;
+							// cout << "CASE 4" << endl;
+							while(SNV_pos[snv_start_idx] < StartPos - reconstruction_start) snv_start_idx++;
+							snv_end_idx = SNV_pos.size();
+
+							// vector<int> SEQ_inrange(SEQ_combined.begin(),SEQ_combined.begin()+(reconstruction_end-StartPos+1));
+							// vector<int> Ns(StartPos-reconstruction_start,0);
+							// SEQ_inrange.insert(SEQ_inrange.begin(),Ns.begin(),Ns.end());
+							// SEQ_range = SEQ_inrange;
 						}
+					}
+
+					vector<pair<int,int>> read;
+					if(snv_end_idx - snv_start_idx > 1){  // read covers more than one SNV
+						// cout << SEQ_combined.size()	<< endl;
+						// cout << snv_start_idx << " " << snv_end_idx << endl;
+						for(int j=snv_start_idx; j<snv_end_idx; j++){
+							// cout << j << " " << SNV_pos[j] << endl;
+							read.push_back(make_pair(j,
+										SEQ_combined[SNV_pos[j] + reconstruction_start - StartPos]));
+						}
+						SNV_matrix.push_back(read);
+						ReadInd.push_back(read_i);  // Read covers more than 1 SNV
+					}
+					else{
+						// deleted_reads_list.push_back(i);  // Delete reads covering 0 or 1 SNVs
+						;
 					}
 
 					// vector<int> read;
@@ -348,24 +387,24 @@ int parseSAM( string al, double min_qual, char gap_quality, double& mean_length,
 					// 	if(SEQ_range[snv] > 0) SNV_count++;
 					// }
 
-					vector<pair<int,int>> read;
-					int SNV_count = 0;
-					int snv;
-					for(int j=0; j<SNV_pos.size(); j++){
-						snv = SNV_pos[j];
-						if(SEQ_range[snv] > 0){
-							read.push_back(make_pair(j, SEQ_range[snv]));
-							SNV_count++;
-						}
-					}
-					if(SNV_count > 1){
-						SNV_matrix.push_back(read);
-						ReadInd.push_back(read_i);  // Read covers more than 1 SNV
-					}
-					else{
-						// deleted_reads_list.push_back(i);  // Delete reads covering 0 or 1 SNVs
-						;
-					}
+					// vector<pair<int,int>> read;
+					// int SNV_count = 0;
+					// int snv;
+					// for(int j=0; j<SNV_pos.size(); j++){
+					// 	snv = SNV_pos[j];
+					// 	if(SEQ_range[snv] > 0){
+					// 		read.push_back(make_pair(j, SEQ_range[snv]));
+					// 		SNV_count++;
+					// 	}
+					// }
+					// if(SNV_count > 1){
+					// 	SNV_matrix.push_back(read);
+					// 	ReadInd.push_back(read_i);  // Read covers more than 1 SNV
+					// }
+					// else{
+					// 	// deleted_reads_list.push_back(i);  // Delete reads covering 0 or 1 SNVs
+					// 	;
+					// }
 
 					mean_length += SEQ_combined.size();
 					seq_counter++;
@@ -384,14 +423,18 @@ int parseSAM( string al, double min_qual, char gap_quality, double& mean_length,
 			}
 		}
 
-		if(SNV_matrix.size() % 100 == 0){
+		if(SNV_matrix.size() > 0 && SNV_matrix.size() % 100 == 0){
+			// cin.get();
 			// cout << "Printing into file" << endl;
 			for(int i=0; i<SNV_matrix.size(); i++){
-				for (int j = 0; j<SNV_pos.size(); j++){
-					writefile << SNV_matrix[i][j]<<" ";
-					// writefile << SNV_matrix[i][j].first<<"," << SNV_matrix[i][j].second << " ";
-					// cout << i << " " << j << " " << SNV_matrix[i][j] << endl;
-				} 
+				for(auto snv_base : SNV_matrix[i]){
+					writefile << snv_base.first<<"," << snv_base.second << " ";
+				}
+				// for (int j = 0; j<SNV_matrix[i].size(); j++){
+				// 	cout << i << " " << j << endl;
+				// 	writefile << SNV_matrix[i][j].first<<"," << SNV_matrix[i][j].second << " ";
+				// 	// cout << i << " " << j << " " << SNV_matrix[i][j] << endl;
+				// } 
 				writefile << "\n";
 			}
 			SNV_matrix.clear();
@@ -401,13 +444,15 @@ int parseSAM( string al, double min_qual, char gap_quality, double& mean_length,
 	
 	if(SNV_matrix.empty() == false){
 		for(int i=0; i<SNV_matrix.size(); i++){
-			for (int j = 0; j<SNV_pos.size(); j++)
-					writefile << SNV_matrix[i][j]<<" ";
+			for(auto snv_base : SNV_matrix[i]){
+				writefile << snv_base.first<<"," << snv_base.second << " ";
+			}
 			writefile << "\n";
 		}
 		SNV_matrix.clear();
 	}
 	writefile.close();
+	read_count = ReadInd.size();
 
 	cout << "mapped_counter:"<<mapped_counter<< " unmapped_counter:"<<unmapped_counter<< endl;
 	cout << "filtered_counter1:"<< filtered_counter1 <<" filtered_counter2:"<<filtered_counter2<<endl;
@@ -426,14 +471,14 @@ int main(int argc, char* argv[]) {
 	string SNV_pos_file;
 	int  reconstruction_start = 0,  reconstruction_end = INT_MAX;
 	double  min_qual;
-	int nFrag;
+	int nFrag = -1;
 	
 	string zonename;
 	
-	const char* const opts_str = "s:p:b:e:q:z:n:";
+	const char* const opts_str = ":s:p:b:e:q:z:n:";
 	int option;
 
-	while((option = std::getopt(argc, argv, opts_str)) != -1){
+	while((option = getopt(argc, argv, opts_str)) != -1){
 		// cout<<"OPTION: "<<option<<endl;
 		switch(option){
 		//    case 'f':
@@ -461,13 +506,10 @@ int main(int argc, char* argv[]) {
 				nFrag = atoi(optarg);
 				cout << "Number of read alignments: " << nFrag << endl;
 				break;
-			// case 'k':
-			//         seq_err = atof(optarg);
-			//         break;
 			case ':':
 				switch(optopt){
 					case 'b':
-						reconstruction_start = 1;
+						reconstruction_start = 0;
 						break;
 					case 'e':
 						reconstruction_end = INT_MAX;
@@ -481,7 +523,6 @@ int main(int argc, char* argv[]) {
 
 	}
 	
-	// seq_err = seq_err*0.01;
 
 	vector<int> SNV_pos;
 	string pos;
@@ -498,8 +539,10 @@ int main(int argc, char* argv[]) {
 	double cpu_time_used;
 	start = clock();
 
-	vector<vector<int> > Read_matrix;	  
+	// vector<vector<int> > Read_matrix;
+	vector<vector<pair<int, int>>> Read_matrix; 
 	int total_count = 0;
+	int read_count = 0;
 	char gap_quality = '*'; //'I'; 	 
 	double mean_length = 0.;
 	int gene_length  = reconstruction_end-reconstruction_start+1;
@@ -509,30 +552,31 @@ int main(int argc, char* argv[]) {
 	int error_flag = 0;
 	cout << "Parsing SAM file." << endl;
   	error_flag = parseSAM(FASTAreads[0], min_qual, gap_quality, mean_length, Read_matrix, SNV_pos,
-				reconstruction_start, reconstruction_end, total_count, gene_length, zonename, nFrag);
+				reconstruction_start, reconstruction_end, total_count, read_count, gene_length, zonename, nFrag);
 
 	if(error_flag>0)
     		return 1;
-	int nReads = Read_matrix.size();
 
 	for (int i = 0; i< Read_matrix.size(); i++)
 	{
 	        if (Read_matrix[i].size() != gene_length)
 			cout << "error!!!"<<endl;
 	}
-	cout <<  endl << "After parsing " << total_count << " reads in file " <<FASTAreads[0]<< ", there are "<<nReads<< " paired_end reads(mean lengths "<< mean_length/Read_matrix.size() << ") covering regions "<< reconstruction_start << "-" << reconstruction_end <<"."<< endl;
+
+	int nReads = read_count;
+	cout <<  endl << "After parsing " << total_count << " reads in file " <<FASTAreads[0]<< ", there are "<<nReads<< " reads(mean lengths "<< mean_length/nReads << ") covering regions "<< reconstruction_start << "-" << reconstruction_end <<"."<< endl;
 	
 	end = clock();	
 	cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
 	cout << "CPU time for SAM parsing: "  << cpu_time_used << endl<<endl;
 
 	start = clock();		
-	vector<vector<int> > SNV_matrix; // nFrag by nSNV
+	vector<vector<pair<int, int>>> SNV_matrix; // sparse representation of nFrag x nSNV matrix
 	int nSNV = SNV_pos.size();
 	// vector<int> deleted_reads_list;	
 	// int nFrag = SNV_matrix.size();	
 	cout << "After calling SNVs from " << gene_length << " bases in regions between " << reconstruction_start << " and " << reconstruction_end << ", " << nSNV<< " SNVs are detected." << endl;
-	cout << "After correcting error, "<< nFrag <<" fragments are used for quasi-species reconstruction." << endl;
+	cout << "After correcting error, "<< nFrag <<" fragments are used for haplotype assembly." << endl;
 	// cout << "reduced number of fragment:" << deleted_reads_list.size() << endl;
 	end = clock();	
 	cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
