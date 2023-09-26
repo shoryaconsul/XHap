@@ -320,7 +320,7 @@ int parseSAM( string al, double min_qual, char gap_quality, double& mean_length,
 							// cout << "CASE 1" << endl;
 							// reconstruction_start = SNV_pos[0], so do not need to search
 							// while(SNV_pos[snv_idx] < reconstruction_start) snv_idx++;
-							snv_end_idx = snv_start_idx + 1;
+							snv_end_idx = snv_start_idx;
 							while(SNV_pos[snv_end_idx] <= EndPos - reconstruction_start) snv_end_idx++;
 
 							// vector<int> SEQ_inrange(SEQ_combined.begin() + (reconstruction_start-StartPos),SEQ_combined.end());
@@ -341,7 +341,7 @@ int parseSAM( string al, double min_qual, char gap_quality, double& mean_length,
 							// search for first SNP index
 							// cout << "CASE 3" << endl;
 							while(SNV_pos[snv_start_idx] < StartPos - reconstruction_start) snv_start_idx++;
-							snv_end_idx = snv_start_idx + 1;
+							snv_end_idx = snv_start_idx;
 							while(SNV_pos[snv_end_idx] <= EndPos - reconstruction_start) snv_end_idx++;
 
 							// vector<int> SEQ_inrange = SEQ_combined;
@@ -364,16 +364,22 @@ int parseSAM( string al, double min_qual, char gap_quality, double& mean_length,
 					}
 
 					vector<pair<int,int>> read;
-					if(snv_end_idx - snv_start_idx > 1){  // read covers more than one SNV
-						// cout << SEQ_combined.size()	<< endl;
-						// cout << snv_start_idx << " " << snv_end_idx << endl;
-						for(int j=snv_start_idx; j<snv_end_idx; j++){
-							// cout << j << " " << SNV_pos[j] << endl;
-							read.push_back(make_pair(j,
-										SEQ_combined[SNV_pos[j] + reconstruction_start - StartPos]));
+					int seq_base = 0;
+					// cout << SEQ_combined.size()	<< endl;
+					// cout << "SNV indices: " << snv_start_idx << " " << snv_end_idx << endl;
+					for(int j=snv_start_idx; j<snv_end_idx; j++){
+						seq_base = SEQ_combined[SNV_pos[j] + reconstruction_start - StartPos];
+						// cout << j << " " << SNV_pos[j] << endl;
+						// cout << "Base: " << seq_base << endl;
+						if(seq_base > 0){
+							read.push_back(make_pair(j, seq_base));
 						}
+					}
+					// cout << "Pushing read" << endl;
+					if(read.size() > 1){  // Read covers more than 1 SNV
+						// cout << "Number of reads: " << SNV_matrix.size() << endl;
 						SNV_matrix.push_back(read);
-						ReadInd.push_back(read_i);  // Read covers more than 1 SNV
+						ReadInd.push_back(read_i);
 					}
 					else{
 						// deleted_reads_list.push_back(i);  // Delete reads covering 0 or 1 SNVs
