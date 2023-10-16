@@ -44,6 +44,7 @@ def train_caecseq(zonename, ploidy, expt):
     zone_name = zonename # zone name
     SNVmatrix_name = zone_name + '_SNV_matrix.txt' # SNP matrix file name
     SNVmatrix, SNVonehot = import_SNV(SNVmatrix_name)
+
     n_read, _, n_SNV, _ = SNVonehot.shape
     n_clusters = ploidy
     drop_prob = 0
@@ -233,6 +234,8 @@ def train_caecseq(zonename, ploidy, expt):
                     f.write('-')
             f.write('\n')
 
+    print("CAECSeq finished!")
+    print("----------------------------------")
     return np.amin(mec_record)
 
 

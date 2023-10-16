@@ -34,6 +34,44 @@ def import_SNV(SNVmatrix_name):
 
     return SNVmatrix.astype(int), SNVonehot.reshape((SNVonehot.shape[0], SNVonehot.shape[1], SNVonehot.shape[2], 1))
 
+from scipy.sparse import coo_matrix, csr_matrix, dok_matrix
+def import_sparseSNV(mat_file):
+    """
+    Read read-SNP matrix into sparse matrix. Useful for large matrices.
+
+    mat_file: str
+        Path to file containing read-SNP matrix
+    
+    Returns
+        NDArray: Sparse read-SNP matrix
+    """
+
+    with open(mat_file, "r") as f:
+        vals, rows, cols = [], [], []
+        idx_val_dict = {}
+        nSNV = int(f.readline().strip())
+        nReads = 0
+        for line in f:
+            line = line.strip()
+            ind_vals = line.split()
+            for iv in ind_vals:
+                snv, val = iv.split(",")
+                vals.append(int(val))
+                rows.append(nReads)
+                cols.append(int(snv))
+                idx_val_dict[(nReads, int(snv))] = int(val)
+            nReads = nReads + 1
+    
+    SNV_matrix = coo_matrix((vals, (rows, cols)), shape=(nReads, nSNV)).todok()
+    
+    SNV_onehot = np.zeros((SNV_matrix.shape[0], 4, SNV_matrix.shape[1], 1))
+    nnz_idx = SNV_matrix.nonzero()
+    for i, j in zip(nnz_idx[0], nnz_idx[1]):
+        SNV_onehot[i, int(SNV_matrix[i, j] - 1), j, 0] = 1
+
+    return SNV_matrix.toarray(), SNV_onehot
+
+
 # get the ACGT statistics of a read matrix
 def ACGT_count(submatrix):
     out = np.zeros((submatrix.shape[1], 4))
@@ -81,21 +119,21 @@ def MEC(SNVmatrix, Recovered_Haplo):
     return res
 
 def target_distribution_haplo(q, SNVmatrix, n_clusters):
-	q = np.argmax(q, axis = 1)
-	haplotypes = origin2haplotype(q, SNVmatrix, n_clusters)
+    q = np.argmax(q, axis = 1)
+    haplotypes = origin2haplotype(q, SNVmatrix, n_clusters)
+    
+    index = []
+    for i in range(SNVmatrix.shape[0]):
+        dis = np.zeros((haplotypes.shape[0]))
+        for j in range(haplotypes.shape[0]):
+            dis[j] = hamming_distance(SNVmatrix[i, :], haplotypes[j, :])
+        index.append(np.argmin(dis))
 
-	index = []
-	for i in range(SNVmatrix.shape[0]):
-	    dis = np.zeros((haplotypes.shape[0]))
-	    for j in range(haplotypes.shape[0]):
-	        dis[j] = hamming_distance(SNVmatrix[i, :], haplotypes[j, :])
-	    index.append(np.argmin(dis))
+    p = np.zeros((SNVmatrix.shape[0], n_clusters))
+    for i in range(p.shape[0]):
+        p[i, index[i]] = 1
 
-	p = np.zeros((SNVmatrix.shape[0], n_clusters))
-	for i in range(p.shape[0]):
-		p[i, index[i]] = 1
-
-	return p
+    return p
 
 # convert list of sequence to numpy array
 def list2array(ViralSeq_list):
@@ -141,3 +179,27 @@ def recall_reconstruction_rate(Recovered_Haplo, SNVHaplo):
     CPR = 1 - min(distance) / (len(distance_table) * SNVHaplo.shape[1])
     
     return distance_table, reconstruction_rate, recall_rate, index, CPR
+
+
+def best_match(rec_hap, new_hap):
+	if np.shape(rec_hap) != np.shape(new_hap):
+		raise ValueError("Input arguments should have the same shape.")
+
+	distance_table = np.zeros((len(rec_hap), len(new_hap)))
+	for i, rh in enumerate(rec_hap):
+		for j, nh in enumerate(new_hap):
+			distance_table[i, j] = hamming_distance(rh, nh)
+
+	index = permutations(range(new_hap.shape[0]))
+	min_distance = np.inf 
+	distance = []
+	for matching in index:
+		count = 0
+		for i, match_idx in enumerate(matching):
+			count += distance_table[i, match_idx]
+		distance.append(count)
+		if count < min_distance:
+			best_matching = matching
+			min_distance = count
+
+	return best_matching
