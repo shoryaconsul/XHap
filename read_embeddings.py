@@ -2,6 +2,7 @@ import numpy as np
 import logging
 import typing
 import shutil
+from scipy.sparse import coo_matrix, csr_matrix, csc_matrix
 from tqdm import tqdm  
 
 import torch
@@ -63,6 +64,62 @@ class SNVMatrixDataset(Dataset):
         SNV_row_onehot = SNV_row_onehot.transpose(1,0)
         return SNV_row_onehot[None,:], idx  # Shape is batch x 4 x numSNP
 
+# Dataset class to use if SNV matrix is stored in sparse format
+class SparseSNVMatrixDataset(Dataset):
+    def __init__(self, SNV_matrix, transform=None):
+        """
+        SNV_file: Sparse/dense read-SNP matrix
+        """
+        
+        self.SNV_matrix = csr_matrix(SNV_matrix)
+	 
+    def __len__(self):
+        return self.SNV_matrix.get_shape()[0]
+    
+    def __getitem__(self, idx):
+        SNV_row = torch.from_numpy(self.SNV_matrix.getrow(idx).todense())[0]
+        SNV_row_onehot = F.one_hot(SNV_row, 5)[:,1:]
+        SNV_row_onehot = SNV_row_onehot.type(torch.float32)
+        SNV_row_onehot = SNV_row_onehot.transpose(1,0)
+        return SNV_row_onehot[None,:], idx  # Shape is batch x 4 x numSNP
+
+
+def chunk_data(datapath, chunk_size=1000, overlap_frac=0.5):
+    """
+    Chunk read-SNP matrix into blocks of size chunk_size shifted by 
+    overlap_frac*chunk_size SNPs. 
+      
+    """
+    with open(datapath, "r") as f:
+        vals, rows, cols = [], [], []
+        idx_val_dict = {}
+        nSNV = int(f.readline().strip())
+        nReads = 0
+        for line in f:
+            line = line.strip()
+            ind_vals = line.split()
+            for iv in ind_vals:
+                snv, val = iv.split(",")
+                vals.append(int(val))
+                rows.append(nReads)
+                cols.append(int(snv))
+                idx_val_dict[(nReads, int(snv))] = int(val)
+            nReads = nReads + 1
+    
+    SNV_matrix = coo_matrix((vals, (rows, cols)), shape=(nReads, nSNV)).tocsc()
+    chunk_overlap = int(chunk_size*overlap_frac)  # Number of SNPs to overlap between blocks
+    
+    print("Chunking matrix")
+    chunked_data = []
+    for i in range(0, nSNV, chunk_size - chunk_overlap):
+        chunk = SNV_matrix[:,i:i+chunk_size].tocsr()
+		# print(i, i+chunk_size, chunk.shape)
+        chunk_rows = chunk.sum(axis=1).nonzero()[0]
+		# print(chunk[chunk_rows, :].get_shape())
+        chunked_data.append((i, SparseSNVMatrixDataset(chunk[chunk_rows, :])))
+    print("Finished chunking matrix into %d chunks" %len(chunked_data))
+
+    return chunked_data
 
 class ReadAE(nn.Module):
     def __init__(self, nSNP: int, latent_dim: int=None):
@@ -107,81 +164,80 @@ def learn_embed(dataset: Dataset, num_epoch: int,
 				savefile: str = None,
 				logger: logging.Logger = None,
 				) -> ReadAE:
-	"""
-	dataset: 
-		torch.utils.data.Dataset object
-	num_epoch: 
-		number of epochs to train network
-	savefile:
-		path to file for storing trained network weights
-	logger:
-		logging.Logger object to log progress
-	"""
+	# """
+    # dataset: 
+	# 	torch.utils.data.Dataset object
+	# num_epoch: 
+	# 	number of epochs to train network
+	# savefile:
+	# 	path to file for storing trained network weights
+	# logger:
+	# 	logging.Logger object to log progress
+	# """
 	# SNVdata = SNVMatrixDataset('Simulated_data/K3/cov15/sample4/simu_erro1_K3_cov15'\
 	#                            '_l5000_iter_7_SNV_matrix.txt')
 
 	# Setting up logging
-	if logger is None:
-		logger = logging.getLogger(__name__)
-		logger.setLevel(logging.INFO)
+    if logger is None:
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.INFO)
 
 		# Create handlers
-		c_handler = logging.StreamHandler()
-		f_handler = logging.FileHandler('embed_train.log', mode='w')
-		c_handler.setLevel(logging.WARNING)
-		f_handler.setLevel(logging.INFO)
-		f_handler.addFilter(MyFilter(logging.INFO))
+        c_handler = logging.StreamHandler()
+        f_handler = logging.FileHandler('embed_train.log', mode='w')
+        c_handler.setLevel(logging.WARNING)
+        f_handler.setLevel(logging.INFO)
+        f_handler.addFilter(MyFilter(logging.INFO))
 
 		# Create formatters and add it to handlers
-		c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-		f_format = logging.Formatter('%(asctime)s %(message)s')
-		c_handler.setFormatter(c_format)
-		f_handler.setFormatter(f_format)
+        c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+        f_format = logging.Formatter('%(asctime)s %(message)s')
+        c_handler.setFormatter(c_format)
+        f_handler.setFormatter(f_format)
 
 		# Add handlers to the logger
-		logger.addHandler(c_handler)
-		logger.addHandler(f_handler)
+        logger.addHandler(c_handler)
+        logger.addHandler(f_handler)
 
-	# Loading data
-	SNVdata = dataset
+    # Loading data
+    SNVdata = dataset
 	# num_epoch = 100
-	nSNP = SNVdata[0][0].shape[2] # Number of SNVs
-	num_read = len(SNVdata)  # Number of reads
-	batch_size = int(np.ceil(num_read/20))
+    nSNP = SNVdata[0][0].shape[2] # Number of SNVs
+    num_read = len(SNVdata)  # Number of reads
+    batch_size = int(np.ceil(num_read/20))
 
-	dataloader = DataLoader(SNVdata, batch_size=batch_size,
+    dataloader = DataLoader(SNVdata, batch_size=batch_size,
 	                        shuffle=True, num_workers=0)
-	device = torch.device("cuda" if torch.cuda.is_available() else "cpu") #  use gpu if available
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu") #  use gpu if available
 
-	embedAE = ReadAE(nSNP, embed_dim).to(device)  # Create and send model to device
-
-	optimizer = optim.Adam(embedAE.parameters(), lr=1e-2)
-	MSE = nn.MSELoss()
-	train_loss_arr = []
-
-	for epoch in tqdm(range(num_epoch)):
-	    loss = 0
-	    for batch_data, _ in dataloader:
-	        optimizer.zero_grad()  # reset the gradients back to zero
-	        _, recon = embedAE(batch_data) # compute reconstructions
-	        train_loss = MSE(recon, batch_data)  # compute training reconstruction loss
-	        train_loss.backward()  # compute accumulated gradients
-	        optimizer.step()
-	        loss += train_loss.item()  # add the mini-batch training loss to epoch loss
-	    loss = loss / len(dataloader)  # compute the epoch training loss
-	    train_loss_arr.append(loss)
+    embedAE = ReadAE(nSNP, embed_dim).to(device)  # Create and send model to device
+    optimizer = optim.Adam(embedAE.parameters(), lr=1e-2)
+    MSE = nn.MSELoss()
+    train_loss_arr = []
+    
+    for epoch in tqdm(range(num_epoch)):
+        loss = 0
+        for batch_data, _ in dataloader:
+            optimizer.zero_grad()  # reset the gradients back to zero
+            _, recon = embedAE(batch_data) # compute reconstructions
+            train_loss = MSE(recon, batch_data)  # compute training reconstruction loss
+            train_loss.backward()  # compute accumulated gradients
+            optimizer.step()
+            loss += train_loss.item()  # add the mini-batch training loss to epoch loss
+        loss = loss / len(dataloader)  # compute the epoch training loss
+        train_loss_arr.append(loss)
 
 	    # display the epoch training loss
-	    logger.info("epoch : {}/{}, loss = {:.2f}".format(epoch + 1, num_epoch, loss))
+        logger.info("epoch : {}/{}, loss = {:.2f}".format(epoch + 1, num_epoch, loss))
 	    # print("epoch : {}/{}, loss = {:.2f}".format(epoch + 1, num_epoch, loss))
-	    if savefile and (epoch % 10 == 0):
-	    	checkpoint = {
+        if savefile and (epoch % 10 == 0):
+            checkpoint = {
             'epoch': epoch + 1,
             'state_dict': embedAE.state_dict(),
             'optimizer': optimizer.state_dict(),
         	}
-	    	save_ckp(checkpoint, savefile)
-	return embedAE
+            save_ckp(checkpoint, savefile)
+    return embedAE
 
 if __name__ == "__main__":
 	datapath = 'Simulated_data/diploid/cov15/sample1/simu_erro1_K2_cov5'\

@@ -1,11 +1,12 @@
 import numpy as np
 from os import path
+from scipy.sparse import coo_matrix, csr_matrix, csc_matrix
 from itertools import permutations, product
 
 import torch
 
 import logging
-from typing import List, Tuple, Optional, Any
+from typing import List, Tuple, Optional, Any, Union
 from nptyping import NDArray
 
 
@@ -123,11 +124,11 @@ def origin2hap(SNV_matrix: NDArray[(Any, Any), int], origin: NDArray[int],
     return hap_matrix
 
 
-def hamming_distance(read: NDArray[(Any,), int], 
+def hamming_distance(read: Union[NDArray[(Any,), int], np.matrix], 
 	haplo: NDArray[(Any,), int]) -> int:
-	"""
-	read:
-		Read denoted by base at each SNP (1-D numpy array)
+    """
+    read:
+        Read denoted by base at each SNP (1-D numpy array)
 	haplo:
 		Haplotype denoted by base at each SNP (1-D numpy array)
 
@@ -135,10 +136,16 @@ def hamming_distance(read: NDArray[(Any,), int],
 		Hamming distance between read and haplotype 
 
 	"""
-	if np.shape(read) != np.shape(haplo):
-		raise ValueError('Read and haplotype must be of the same dimension.')
+    if isinstance(read, np.matrix):
+        read = read.A1
+    if isinstance(haplo, np.matrix):
+        haplo = haplo.A1
 
-	return sum((haplo - read)[read != 0] != 0)
+    if np.shape(read) != np.shape(haplo):
+        # print(read.shape, haplo.shape)
+        raise ValueError('Read and haplotype must be of the same dimension.')
+
+    return sum((haplo - read)[read != 0] != 0)
 
 
 def MEC(SNV_matrix: NDArray[(Any, Any), int],
@@ -156,12 +163,12 @@ def MEC(SNV_matrix: NDArray[(Any, Any), int],
     """
 
     if np.shape(SNV_matrix)[1] != np.shape(hap_matrix)[1]:
-    	raise ValueError("Different number of SNPs in reads and haplotypes.")
-
-    res = 0
+        raise ValueError("Different number of SNPs in reads and haplotypes.")
     
+    res = 0
+    # print(type(SNV_matrix), type(hap_matrix))
     for SNV_read in SNV_matrix:
-        dis = [hamming_distance(SNV_read, hap) for j, hap in enumerate(hap_matrix)]
+        dis = [hamming_distance(SNV_read.squeeze(), hap) for j, hap in enumerate(hap_matrix)]
         res = res + min(dis)
         
     return res
@@ -170,40 +177,43 @@ def MEC(SNV_matrix: NDArray[(Any, Any), int],
 # evaluate the correct phasing rate
 def compute_cpr(recovered_haplo: NDArray[(Any, Any), int], 
 	true_haplo: NDArray[(Any, Any), int]) -> float:
-	"""
-	recovered_haplo:
-		k x n matrix of recovered haplotypes
-	true_haplo:
-		True haplotypes (ground truth)
+	# """
+	# recovered_haplo:
+	# 	k x n matrix of recovered haplotypes
+	# true_haplo:
+	# 	True haplotypes (ground truth)
 
-	Returns
-		correct phasing rate
-	"""
+	# Returns
+	# 	correct phasing rate
+	# """
 
-	if np.shape(recovered_haplo) != np.shape(true_haplo):
-		raise ValueError("Input arguments should have the same shape.")
+    if np.shape(recovered_haplo) != np.shape(true_haplo):
+        raise ValueError("Input arguments should have the same shape.")
+    
+    distance_table = np.zeros((len(recovered_haplo), len(true_haplo)))
+    for i, rec_hap in enumerate(recovered_haplo):
+        for j, true_hap in enumerate(true_haplo):
+            distance_table[i, j] = hamming_distance(rec_hap, true_hap)
 
-	distance_table = np.zeros((len(recovered_haplo), len(true_haplo)))
-	for i, rec_hap in enumerate(recovered_haplo):
-		for j, true_hap in enumerate(true_haplo):
-			distance_table[i, j] = hamming_distance(rec_hap, true_hap)
+    # print("Distance table")
+    # print(distance_table)
 
-	index = permutations(range(true_haplo.shape[0]))
-	min_distance = np.inf 
-	distance = []
-	for matching in index:
-		count = 0
-		for i, match_idx in enumerate(matching):
-			count += distance_table[i, match_idx]
-		distance.append(count)
-		if count < min_distance:
-			best_matching = matching
-			min_distance = count
+    index = permutations(range(true_haplo.shape[0]))
+    min_distance = np.inf 
+    distance = []
+    for matching in index:
+        count = 0
+        for i, match_idx in enumerate(matching):
+            count += distance_table[i, match_idx]
+        distance.append(count)
+        if count < min_distance:
+            best_matching = matching
+            min_distance = count
 	# index = (list(index))[np.argmin(np.array(distance))]  # Best one-to-one mapping
 	# print(best_matching)
-	cpr = 1 - min(distance) / np.size(true_haplo)
+    cpr = 1 - min(distance) / np.size(true_haplo)
 
-	return cpr
+    return cpr
 
 
 def read_true_hap(gt_file: str, pos_file: str) -> NDArray[(Any, Any), int]:
@@ -261,12 +271,43 @@ def read_hap(hap_file: str) -> NDArray[(Any, Any), int]:
             if not line:
                 break
             else:
-                if line.split()[0] != 'Haplotype':
+                if 'Hap' not in line and 'hap' not in line.strip():
                     hap = np.array([base_int[c] for c in line.strip()])
                     hap_list.append(hap.astype('int'))
     
     return np.array(hap_list)		
 
+
+def read_sparseSNVMatrix(mat_file: str) -> csr_matrix:
+    """
+    Read read-SNP matrix into sparse matrix. Useful for large matrices.
+
+    mat_file: str
+        Path to file containing read-SNP matrix
+    
+    Returns
+        csr_matrix: Sparse read-SNP matrix
+    """
+
+    with open(mat_file, "r") as f:
+        vals, rows, cols = [], [], []
+        idx_val_dict = {}
+        nSNV = int(f.readline().strip())
+        nReads = 0
+        for line in f:
+            line = line.strip()
+            ind_vals = line.split()
+            for iv in ind_vals:
+                snv, val = iv.split(",")
+                vals.append(int(val))
+                rows.append(nReads)
+                cols.append(int(snv))
+                idx_val_dict[(nReads, int(snv))] = int(val)
+            nReads = nReads + 1
+    
+    SNV_matrix = coo_matrix((vals, (rows, cols)), shape=(nReads, nSNV)).tocsr()
+    
+    return SNV_matrix
 
 class PermDict:
     """
@@ -369,7 +410,7 @@ def compute_ver(recovered_haplo: NDArray[(Any, ), int],
     
     PermDict_list = []
     vec_err = 0  # Number of vector errors
-
+    mismatch_SNP = []
     for j in range(n_SNP):
         thap = true_haplo[:, j]
         rhap = recovered_haplo[:, j]
@@ -379,18 +420,23 @@ def compute_ver(recovered_haplo: NDArray[(Any, ), int],
             dis = np.sum(rhap != thap[np.array(p_i)])
             if dis == 0:  # Perfect match
                 perm_best = np.array(p_i)
+                dis_min = 0
                 break
             elif dis < dis_min:  # Improved match
                 dis_min = dis
                 perm_best = np.array(p_i)
-        
+
         unique_vals, inverse_idx = np.unique(rhap, return_inverse=True)
         pos_idx = [list(np.nonzero(inverse_idx == i)[0])
                    for i in range(len(unique_vals))]
         perm_tups = [list(perm_best[np.nonzero(inverse_idx == i)])
                      for i in range(len(unique_vals))]       
 #         print(perm_best, perm_tups, pos_idx)
-        PermDict_list.append(PermDict(perm_tups, pos_idx, n_hap))
+        if dis_min < n_hap:  # Ignore if there is no good match
+            PermDict_list.append(PermDict(perm_tups, pos_idx, n_hap))
+        else:
+            PermDict_list.append(PermDict(perm_tups, pos_idx, n_hap))
+            mismatch_SNP.append(j)
         
         if j > 0:  # Computing vector error using best possible matches
             err = permute_distance(PermDict_list[-2], PermDict_list[-1])
@@ -400,4 +446,6 @@ def compute_ver(recovered_haplo: NDArray[(Any, ), int],
     if n_hap == 2:  # Compute switching error in case of two haplotypes
         res = res/2
     
+    # print("Number of mismatched SNPs: %d" %len(mismatch_SNP))
+    # print(mismatch_SNP)
     return res

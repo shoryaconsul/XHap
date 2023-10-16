@@ -4,6 +4,7 @@ read_AE
 *.npz
 *.log
 *.pyc
+test_sparse.py
 
 .ipynb_checkpoints
 
