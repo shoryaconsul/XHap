@@ -148,7 +148,7 @@ def compute_MEC_blocks(blocks_dict: Dict[int, NDArray], vcf_file: str, SNV_matri
     
     mec = []
     for snp_idx, hap_block in blocks_dict.items():
-        block_len = np.shape(hap_block)[1]
+        num_hap, block_len = np.shape(hap_block)
         hap_block_bases = np.zeros(np.shape(hap_block))
         for (i, j), h in np.ndenumerate(hap_block):  # Determine base at each SNP for inferred haplotypes
             if h >= 0:
@@ -158,7 +158,14 @@ def compute_MEC_blocks(blocks_dict: Dict[int, NDArray], vcf_file: str, SNV_matri
         
         mec.append(MEC(SNV_matrix[:, snp_idx-1:snp_idx-1+block_len], hap_block_bases))
     
-    return sum(mec)
+    # Accounting for gaps
+    idx_len_list = [(idx, np.shape(blk)[1]) for idx, blk in blocks_dict.items()]
+    idx_list, len_list = zip(*idx_len_list)
+    num_gaps = 0
+    for i, (idx, blk_len) in enumerate(idx_len_list[:-1]):
+        num_gaps = num_gaps + idx_len_list[i+1][0] - idx - blk_len
+
+    return sum(mec) + num_gaps*num_hap
 
 def compute_ver_blocks(blocks_dict: Dict[int, NDArray], vcf_file: str, true_haplo: NDArray[(Any, Any), int]):
     """
