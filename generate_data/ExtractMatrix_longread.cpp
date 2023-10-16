@@ -561,8 +561,8 @@ int main(int argc, char* argv[]) {
 	char gap_quality = '*'; //'I'; 	 
 	double mean_length = 0.;
 	int gene_length  = reconstruction_end-reconstruction_start+1;
-        vector<vector<int> > ReadSeq;
-        vector<int> StartSeq, EndSeq;	
+	vector<vector<int> > ReadSeq;
+	vector<int> StartSeq, EndSeq;	
 
 	int error_flag = 0;
   	error_flag = parseSAMpaired(FASTAreads[0], min_qual,  min_length, max_insertln, gap_quality,  mean_length, Read_matrix, reconstruction_start, reconstruction_end, total_count, gene_length, zonename, ReadSeq, StartSeq, EndSeq);
@@ -600,7 +600,7 @@ int main(int argc, char* argv[]) {
 	
 
 	long long int read_ln = min_length;
-        std::string name = zonename;
+    std::string name = zonename;
 
 	std::ofstream writefile1;
 	std::ofstream writefile2;

@@ -149,17 +149,35 @@ def ranbow_MEC(SNV_matrix: NDArray[(Any, Any), int],
             return si + haplen >= nz_idx[0]
         elif si > nz_idx[0]:
             return si <= nz_idx[-1]
+        
+    def read_distance(SNV_read: NDArray[int], si: int, hap: NDArray[int]) -> int:
+        """
+        Computes the distance between a read and a haplotype.
+        """
 
+        nz_idx = np.nonzero(SNV_read)[0]
+        if read_overlap(SNV_read, si, len(hap)):
+            if si < nz_idx[0] and si+len(hap) > nz_idx[-1]:  #  Read fully covered by haplotype
+                dist =  hamming_distance(SNV_read[si:si+len(hap)], hap)
+            elif si < nz_idx[0]:  #  end of haplotype does not cover read
+                dist = (hamming_distance(SNV_read[si:si+len(hap)], hap)
+                        + np.sum(SNV_read[si+len(hap):] > 0))
+            else:  # start of haplotype does not cover read
+                dist = (hamming_distance(SNV_read[si:si+len(hap)], hap)
+                        + np.sum(SNV_read[:si] > 0))
+        else:  # Read does not overlap with haplotype at all
+            dist = np.sum(SNV_read > 0)
+
+        return dist
+    
     res = 0
     for SNV_read in SNV_matrix:
-        dis = [
-            hamming_distance(SNV_read[si:si+len(hap)], hap)
-                if read_overlap(SNV_read, si, len(hap)) else np.inf
-            for si, hap in hap_list
-            ]
-        # if np.isinf(min(dis)):
-        #     print(np.nonzero(SNV_read)[0])
-        res = res + min(dis)
+        dis = [ read_distance(SNV_read, si, hap)for si, hap in hap_list]
+        min_dist = min(dis)
+        # if np.isinf(min_dist):
+        #     min_dist = np.sum(SNV_read > 0)
+        res = res + min_dist
+        # print(min_dist, res, dis)
         # print(dis, res)
         
     return res

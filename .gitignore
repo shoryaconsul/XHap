@@ -4,6 +4,7 @@ read_AE
 *.npz
 *.log
 *.pyc
+test_sparse.py
 
 .ipynb_checkpoints
 
@@ -70,3 +71,10 @@ hapcompass*
 
 generate_data/gen_benchmark_data.sh
 generate_data/run_caec_haplo.sh
+
+generate_data/NA12878/*.bam
+generate_data/NA12878/*.sam
+generate_data/NA12878/*.bai
+generate_data/NA12878/*.vcf
+generate_data/NA12878/HG001_GRCh37*
+generate_data/NA12878/*.jpg

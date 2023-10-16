@@ -65,28 +65,31 @@ for i in range(args.num_expt):
     # Read best XHap result
     xhap_res = np.load(fhead + '/haptest_xformer_res_best.npz')
     xhap_hap = xhap_res['rec_hap']
-    true_hap = xhap_res['true_hap']
-
-    mec_base = MEC(SNV_matrix, true_hap)
     mec_xhap = MEC(SNV_matrix, xhap_hap)
     mec_arr[0, i] = mec_xhap
-    delta_mec_arr[0, i] = mec_xhap - mec_base
-    cpr_arr[0, i] = compute_cpr(xhap_hap, true_hap)
-    ver_arr[0, i] = compute_ver(xhap_hap, true_hap)
-    mec_rate_arr[0, i] = mec_xhap/np.sum(SNV_matrix > 0)
-    ngaps_arr[0, i] = np.sum(xhap_hap == 0)
-    nblocks_arr[0, i] = np.sum(np.sum(xhap_hap != 0, axis=0) == 0) + 1
+
+    if not args.mec_only:
+        true_hap = xhap_res['true_hap']
+
+        mec_base = MEC(SNV_matrix, true_hap)
+        delta_mec_arr[0, i] = mec_xhap - mec_base
+        cpr_arr[0, i] = compute_cpr(xhap_hap, true_hap)
+        ver_arr[0, i] = compute_ver(xhap_hap, true_hap)
+        mec_rate_arr[0, i] = mec_xhap/np.sum(SNV_matrix > 0)
+        ngaps_arr[0, i] = np.sum(xhap_hap == 0)
+        nblocks_arr[0, i] = np.sum(np.sum(xhap_hap != 0, axis=0) == 0) + 1
 
     # Read best CAECSeq result
     caec_hap = read_hap(fhead + '/' + fhead + '_Reconstructed_Strains.txt')
     mec_caec = MEC(SNV_matrix, caec_hap)
     mec_arr[1, i] = mec_caec
-    delta_mec_arr[1, i] = mec_caec - mec_base
-    cpr_arr[1, i] = compute_cpr(caec_hap, true_hap)
-    ver_arr[1, i] = compute_ver(caec_hap, true_hap)
-    mec_rate_arr[1, i] = mec_caec/np.sum(SNV_matrix > 0)
-    ngaps_arr[1, i] = np.sum(caec_hap == 0)
-    nblocks_arr[1, i] = np.sum(np.sum(caec_hap != 0, axis=0) == 0) + 1
+    if not args.mec_only:
+        delta_mec_arr[1, i] = mec_caec - mec_base
+        cpr_arr[1, i] = compute_cpr(caec_hap, true_hap)
+        ver_arr[1, i] = compute_ver(caec_hap, true_hap)
+        mec_rate_arr[1, i] = mec_caec/np.sum(SNV_matrix > 0)
+        ngaps_arr[1, i] = np.sum(caec_hap == 0)
+        nblocks_arr[1, i] = np.sum(np.sum(caec_hap != 0, axis=0) == 0) + 1
 
     # Create VCF file for other benchmarks
     gen_vcf(args.reference, pos_file, mat_file, vcf_file)
@@ -94,7 +97,7 @@ for i in range(args.num_expt):
     os.chdir(hapcut_dir)
     my_env = os.environ.copy()
     if 'LD_LIBRARY_PATH' in my_env:
-        my_env['LD_LIBRARY_PATH'] = my_env['LD_LIBRARY_PATH'] + os.path.join(os.getcwd(), 'htslib')
+        my_env['LD_LIBRARY_PATH'] += os.pathsep + os.path.join(os.getcwd(), 'htslib')
     else:
         my_env['LD_LIBRARY_PATH'] = os.path.join(os.getcwd(), 'htslib')
 
@@ -150,7 +153,7 @@ for i in range(args.num_expt):
             haptree_mec = compute_MEC_blocks(haptree_hap_blocks, vcf_file, SNV_matrix)
             if haptree_mec < mec_arr[4,i] or j == 0:
                 mec_arr[4,i] = haptree_mec
-                if args.mec_only:
+                if not args.mec_only:
                     cpr_arr[4,i] = compute_cpr_blocks(haptree_hap_blocks, vcf_file, true_hap)
                     delta_mec_arr[4,i] = haptree_mec - mec_base
                     ver_arr[4,i] = compute_ver_blocks(haptree_hap_blocks, vcf_file, true_hap)
@@ -168,7 +171,7 @@ for i in range(args.num_expt):
         elif 'human' in fhead:
             scaf_file = 'human_scaffold.list'
 
-        # Uncomment for real data
+        # # Uncomment for real data
         # scaf_file = 'soltub_scaffold_1.list'
         # with open(args.reference, 'r') as f:
         #     while True:
