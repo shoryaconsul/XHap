@@ -44,3 +44,18 @@ There are several Python scripts included to run XHap end-to-end -- from data ge
 1. **run_indel_expt.py:** Running experiments to validate indel detection included in the XHap pipeline
 
 ## Citation
+If you use this software, please cite:
+
+Consul, S., Ke, Z., & Vikalo, H. (2023). XHap: haplotype assembly using long-distance read correlations learned by transformers. Bioinformatics Advances, 3(1), vbad169.
+
+The correspodning BibTex is:
+>@article{consul2023xhap,
+  title={XHap: haplotype assembly using long-distance read correlations learned by transformers},
+  author={Consul, Shorya and Ke, Ziqi and Vikalo, Haris},
+  journal={Bioinformatics Advances},
+  volume={3},
+  number={1},
+  pages={vbad169},
+  year={2023},
+  publisher={Oxford University Press}
+}
